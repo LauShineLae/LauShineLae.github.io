@@ -1,43 +1,209 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Confluence搭建指南</title>
-    <url>/2024/04/Confluence%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/</url>
-    <content><![CDATA[<p>一键搭建指南</p>
-<p>使用如下镜像拉起镜像</p>
-<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">podman run --name=<span class="string">&quot;confluence&quot;</span> -d -p 8090:8090 -p 8091:8091 laushinelae/confluence-server:7.13.7-jdk11</span><br><span class="line"></span><br><span class="line">测试</span><br><span class="line"></span><br><span class="line">ok</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-
-
-<p>使用confluence工具破解</p>
-<p>下载链接： <a href="../File/confluence%E5%B7%A5%E5%85%B7.zip">Confluence工具</a> </p>
+    <title>自定义我的POC测试机</title>
+    <url>/2024/04/000%20%E8%87%AA%E5%AE%9A%E4%B9%89%E6%88%91%E7%9A%84POC%E6%B5%8B%E8%AF%95%E6%9C%BA/</url>
+    <content><![CDATA[<h1 id="总览"><a href="#总览" class="headerlink" title="总览"></a>总览</h1><p>场景：测试的时候，需要提供POC测试服务器，如果提供的服务器是别人的，可能会因为对别人的服务器不熟悉：安装了什么应用？应用如何启停？网络如何启停？等等，这一系列的问题，都可能导致测试周期延长，给客户不好的体验。</p>
+<p>解决：针对这一系列的问题，我会从零到一的讲述，我是如何搭建属于自己的POC测试服务器。</p>
+<p>流程：我会将流程分为多个阶段，拆解每个阶段后，可以满足不同的人员，在不同的阶段进行不同的自定义。</p>
+<h1 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h1><p><img src="/../Image/POC%E6%9C%8D%E5%8A%A1%E5%99%A8.png" alt="POC服务器"></p>
+<h1 id="外链"><a href="#外链" class="headerlink" title="外链"></a>外链</h1><h2 id="创建基础OVA"><a href="#创建基础OVA" class="headerlink" title="创建基础OVA"></a>创建基础OVA</h2><p>概述：简而言之，这一步只是将CentOS中安装Docker，并打包成OVA。</p>
+<p>详见： <a href="/2024/04/001%20%E5%88%9B%E5%BB%BACentOS%E7%9A%84OVA%E5%B9%B6%E5%AE%89%E8%A3%85Docker%E5%92%8CCockpit/" title="创建CentOS的OVA并安装Docker和Cockpit">创建CentOS的OVA并安装Docker和Cockpit</a></p>
+<h2 id="使用docker构建镜像"><a href="#使用docker构建镜像" class="headerlink" title="使用docker构建镜像"></a>使用docker构建镜像</h2><p>概述：</p>
+<p>详见：</p>
 ]]></content>
       <categories>
         <category>Linux</category>
-        <category>Docker</category>
-        <category>破解教程</category>
-        <category>Docker</category>
+        <category>Docker/Podman</category>
+        <category>CentOS</category>
+        <category>教程</category>
+        <category>POC测试机</category>
       </categories>
       <tags>
-        <tag>Docker, Confluence</tag>
+        <tag>Linux</tag>
+        <tag>CentOS</tag>
+        <tag>Docker/Podman</tag>
+        <tag>POC测试机</tag>
+        <tag>教程</tag>
+        <tag>OVA</tag>
+        <tag>POC</tag>
       </tags>
   </entry>
   <entry>
-    <title>Hello World</title>
-    <url>/2024/04/hello-world/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+    <title>创建CentOS的OVA并安装Docker和Cockpit</title>
+    <url>/2024/04/001%20%E5%88%9B%E5%BB%BACentOS%E7%9A%84OVA%E5%B9%B6%E5%AE%89%E8%A3%85Docker%E5%92%8CCockpit/</url>
+    <content><![CDATA[<p>[TOC]</p>
+<h1 id="下载CentOS最小镜像"><a href="#下载CentOS最小镜像" class="headerlink" title="下载CentOS最小镜像"></a>下载CentOS最小镜像</h1><p>阿里云下载地址：<a href="http://mirrors.aliyun.com/centos/7.9.2009/isos/x86_64/CentOS-7-x86_64-Minimal-2009.iso">http://mirrors.aliyun.com/centos/7.9.2009/isos/x86_64/CentOS-7-x86_64-Minimal-2009.iso</a></p>
+<h1 id="在VMware-ESXI-或者-VMware-Workstation-中部署"><a href="#在VMware-ESXI-或者-VMware-Workstation-中部署" class="headerlink" title="在VMware ESXI 或者 VMware Workstation 中部署"></a>在VMware ESXI 或者 VMware Workstation 中部署</h1><h2 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h2><p><img src="/../Image/image-20240407143948081.png" alt="image-20240407143948081"></p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p><img src="/../Image/image-20240407143415312.png" alt="image-20240407143415312"></p>
+<h2 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h2><p><img src="/../Image/image-20240407144254001.png" alt="image-20240407144254001"></p>
+<h1 id="系统优化"><a href="#系统优化" class="headerlink" title="系统优化"></a>系统优化</h1><h2 id="更新"><a href="#更新" class="headerlink" title="更新"></a>更新</h2><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">yum update</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+<p><img src="/../Image/image-20240407145036284.png" alt="image-20240407145036284"></p>
+<h2 id="安装实用插件"><a href="#安装实用插件" class="headerlink" title="安装实用插件"></a>安装实用插件</h2><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">修改主机名</span></span><br><span class="line">hostnamectl set-hostname poc</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">下载工具wget</span></span><br><span class="line">yum -y install wget</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">补全工具</span></span><br><span class="line">yum install bash-completion -y </span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+<h2 id="安装Cockipit和docker"><a href="#安装Cockipit和docker" class="headerlink" title="安装Cockipit和docker"></a>安装Cockipit和docker</h2><p>1）使用yum安装Cockpit</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">yum install cockpit -y</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+<p>2）开机启动Cockpit</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">systemctl <span class="built_in">enable</span> cockpit.socket --now</span><br></pre></td></tr></table></figure>
 
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+<p>3）防火墙配置(关闭防火墙可忽略)</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">firewall-cmd --permanent --zone=public --add-service=cockpit</span><br><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure>
+
+<p>4）安装常用模块</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">yum install cockpit-docker cockpit-dashboard cockpit-storaged -y</span><br></pre></td></tr></table></figure>
+
+<p>5）开机启动Docker</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">sudo systemctl <span class="built_in">enable</span> docker</span><br></pre></td></tr></table></figure>
+
+<p>使用<code>https://localhost:9090</code>打开cockpit</p>
+<p><img src="/../Image/image-20240407191337525.png" alt="image-20240407191337525"></p>
+<p>账号密码登陆后：</p>
+<p><img src="/../Image/image-20240407191411692.png" alt="image-20240407191411692"></p>
+<h2 id="清理"><a href="#清理" class="headerlink" title="清理"></a>清理</h2><p>清除缓存并生成新的缓存</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">sudo yum clean all</span><br><span class="line">sudo yum makecache</span><br></pre></td></tr></table></figure>
+
+<h1 id="导出OVA"><a href="#导出OVA" class="headerlink" title="导出OVA"></a>导出OVA</h1><p>如果你是workstation用户，请直接使用workstation导出。</p>
+<p>如果你是esxi，可以使用官方的工具导出，</p>
+<p>工具的下载地址：<a href="https://customerconnect.vmware.com/cn/downloads/details?downloadGroup=OVFTOOL443&productId=1477">https://customerconnect.vmware.com/cn/downloads/details?downloadGroup=OVFTOOL443&amp;productId=1477</a></p>
+<p><img src="/../Image/image-20240407191541270.png" alt="image-20240407191541270"></p>
+<p>选择你的系统，下载后，使用如下命令创建OVA：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Windows</span></span><br><span class="line"><span class="comment"># 安装后进入安装路径并打开CMD窗口：C:\Program Files\VMware\VMware OVF Tool</span></span><br><span class="line">./ovftool vi://username:Password@10.x.x.x:443/virtualservername D:\virtualservername.ova</span><br><span class="line"></span><br><span class="line"><span class="comment"># MacOS</span></span><br><span class="line"><span class="built_in">cd</span> /Applications/VMware\ OVF\ Tool</span><br><span class="line"></span><br><span class="line">./ovftool vi://username:Password@10.x.x.x:443/virtualservername /Users/username/Downloads/virtualservername.ova</span><br></pre></td></tr></table></figure>
+
+
+<hr>
+<p>至此，POC的环境已经搭建成功。</p>
+<p>当然，你也可以直接下载我搭建好的ova，那就可以省略上面的步骤。</p>
+<p>下载链接如下：</p>
+<p><a href="https://www.123pan.com/s/BHY0Vv-4oc5v.html%E6%8F%90%E5%8F%96%E7%A0%81:yJjO">https://www.123pan.com/s/BHY0Vv-4oc5v.html提取码:yJjO</a></p>
+<p><img src="/../Image/image-20240407202037782.png" alt="image-20240407202037782"></p>
+<hr>
 ]]></content>
+      <categories>
+        <category>Linux</category>
+        <category>Docker/Podman</category>
+        <category>CentOS</category>
+        <category>教程</category>
+        <category>POC测试机</category>
+        <category>构建OVA</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
+        <tag>CentOS</tag>
+        <tag>Docker/Podman</tag>
+        <tag>POC测试机</tag>
+        <tag>教程</tag>
+        <tag>OVA</tag>
+        <tag>POC</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>使用Docker搭建Confluence指南</title>
+    <url>/2024/04/020%20%E4%BD%BF%E7%94%A8%20Docker%E6%90%AD%E5%BB%BAConfluence%E6%8C%87%E5%8D%97/</url>
+    <content><![CDATA[<h1 id="一键搭建指南"><a href="#一键搭建指南" class="headerlink" title="一键搭建指南"></a>一键搭建指南</h1><h2 id="使用如下镜像拉起镜像"><a href="#使用如下镜像拉起镜像" class="headerlink" title="使用如下镜像拉起镜像"></a>使用如下镜像拉起镜像</h2><figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">podman run --name=<span class="string">&quot;confluence&quot;</span> -d -p 8090:8090 -p 8091:8091 laushinelae/confluence-server:7.13.7-jdk11</span><br></pre></td></tr></table></figure>
+
+<h2 id="打开网页"><a href="#打开网页" class="headerlink" title="打开网页"></a>打开网页</h2><p><a href="http://localhost:8090/">http://localhost:8090</a></p>
+<h2 id="使用confluence工具破解"><a href="#使用confluence工具破解" class="headerlink" title="使用confluence工具破解"></a>使用confluence工具破解</h2><p>下载链接： <a href="../File/confluence%E5%B7%A5%E5%85%B7.zip">Confluence工具</a> </p>
+]]></content>
+      <categories>
+        <category>Docker/Podman</category>
+        <category>教程</category>
+      </categories>
+      <tags>
+        <tag>教程</tag>
+        <tag>Docker</tag>
+        <tag>Confluence</tag>
+        <tag>破解</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>CentOS中安装Docker教程</title>
+    <url>/2024/04/010%20CentOS%E4%B8%AD%E5%AE%89%E8%A3%85Docker%E6%95%99%E7%A8%8B/</url>
+    <content><![CDATA[<p>[TOC]</p>
+<h2 id="1-Docker-版本"><a href="#1-Docker-版本" class="headerlink" title="1. Docker 版本"></a><strong>1. Docker 版本</strong></h2><h3 id="community-edition-社区版"><a href="#community-edition-社区版" class="headerlink" title="community-edition 社区版"></a>community-edition 社区版</h3><h3 id="enterprise-edition-企业版"><a href="#enterprise-edition-企业版" class="headerlink" title="enterprise-edition 企业版"></a>enterprise-edition 企业版</h3><p> Docker 企业版（EE）专为企业开发和 IT 团队设计，可在大规模生产中构建，运送和运行关键业务应用程序。Docker EE 集成，认证和支持，为企业提供业界最安全的容器平台，实现所有应用程序的现代化。作为一个以应用为中心的平台，Docker EE 旨在加速和保护整个软件供应链，从开发到在任何基础设施上运行的生产。我们学习 Docker 使用 CE 社区版即可。</p>
+<h2 id="2-在-CentOS-上安装-Docker-引擎"><a href="#2-在-CentOS-上安装-Docker-引擎" class="headerlink" title="2. 在 CentOS 上安装 Docker 引擎"></a><strong>2. 在 CentOS 上安装 Docker 引擎</strong></h2><p>Docker 支持 Mac Windows Linux，本文使用 Linux 环境教大家如何基于 CentOS 安装 Docker 及配置镜像速。</p>
+<p>官方文档：<strong><a href="https://docs.docker.com/">https://docs.docker.com/</a></strong> </p>
+<h3 id="2-1-系统要求"><a href="#2-1-系统要求" class="headerlink" title="2.1. 系统要求"></a><strong>2.1. 系统要求</strong></h3><p>官网提示如果要安装 Docker Engine，您需要一个 CentOS 7 以及以上的稳定版本。</p>
+<h3 id="2-2-卸载旧版本"><a href="#2-2-卸载旧版本" class="headerlink" title="2.2. 卸载旧版本"></a><strong>2.2. 卸载旧版本</strong></h3><p>较旧的 Docker 版本为 docker 或 docker-engine。如果已安装这些程序，请卸载它们以及相关的依赖项。</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">sudo yum remove docker \</span><br><span class="line">docker-client \</span><br><span class="line">docker-client-latest \</span><br><span class="line">docker-common \</span><br><span class="line">docker-latest \</span><br><span class="line">docker-latest-logrotate \</span><br><span class="line">docker-logrotate \</span><br><span class="line">docker-engine</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Docker 镜像、容器、数据卷和网络数据都保存在 &#x2F;var&#x2F;lib&#x2F;docker&#x2F; 。新的Docker 引擎包现在为 Docker-ce 。</p>
+</blockquote>
+<h3 id="2-3-设置-yum-源"><a href="#2-3-设置-yum-源" class="headerlink" title="2.3. 设置 yum 源"></a><strong>2.3. 设置 yum 源</strong></h3><p>安装 yum-utils 软件包（提供了 yum-config-manager 程序）并设置稳定的 yum 源方便下载 Docker Engine。 </p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="comment"># step 1: 安装必要的一些系统工具</span></span><br><span class="line">sudo yum install -y yum-utils device-mapper-persistent-data lvm2</span><br><span class="line"><span class="comment"># Step 2: 添加软件源信息</span></span><br><span class="line">sudo yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo</span><br><span class="line"><span class="comment"># Step 3</span></span><br><span class="line">sudo sed -i <span class="string">&#x27;s+download.docker.com+mirrors.aliyun.com/docker-ce+&#x27;</span> /etc/yum.repos.d/docker-ce.repo</span><br><span class="line"><span class="comment"># Step 4: 更新</span></span><br><span class="line">sudo yum makecache fast</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">&gt;<span class="comment"># 注意：</span></span><br><span class="line">&gt;<span class="comment"># 官方软件源默认启用了最新的软件，您可以通过编辑软件源的方式获取各个版本的软件包。例如官方并没有将测试版本的软件源置为可用，您可以通过以下方式开启。同理可以开启各种测试版本等。</span></span><br><span class="line">&gt;<span class="comment"># vim /etc/yum.repos.d/docker-ce.repo</span></span><br><span class="line">&gt;<span class="comment">#   将[docker-ce-test]下方的enabled=0修改为enabled=1</span></span><br><span class="line">&gt;<span class="comment">#</span></span><br><span class="line">&gt;<span class="comment"># 安装指定版本的Docker-CE:</span></span><br><span class="line">&gt;<span class="comment"># Step 1: 查找Docker-CE的版本:</span></span><br><span class="line">&gt;<span class="comment"># yum list docker-ce.x86_64 --showduplicates | sort -r</span></span><br><span class="line">&gt;<span class="comment">#   Loading mirror speeds from cached hostfile</span></span><br><span class="line">&gt;<span class="comment">#   Loaded plugins: branch, fastestmirror, langpacks</span></span><br><span class="line">&gt;<span class="comment">#   docker-ce.x86_64            17.03.1.ce-1.el7.centos            docker-ce-stable</span></span><br><span class="line">&gt;<span class="comment">#   docker-ce.x86_64            17.03.1.ce-1.el7.centos            @docker-ce-stable</span></span><br><span class="line">&gt;<span class="comment">#   docker-ce.x86_64            17.03.0.ce-1.el7.centos            docker-ce-stable</span></span><br><span class="line">&gt;<span class="comment">#   Available Packages</span></span><br><span class="line">&gt;<span class="comment"># Step2: 安装指定版本的Docker-CE: (VERSION例如上面的17.03.0.ce.1-1.el7.centos)</span></span><br><span class="line">&gt;<span class="comment"># sudo yum -y install docker-ce-[VERSION]</span></span><br></pre></td></tr></table></figure>
+<h3 id="2-4-Docker-安装"><a href="#2-4-Docker-安装" class="headerlink" title="2.4. Docker 安装"></a><strong>2.4. Docker 安装</strong></h3></blockquote>
+<p>安装最新版本的 Docker Engine 和容器</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">sudo yum -y install docker-ce docker-ce-cli containerd.io</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>安装过程中如果提示您接受 GPG 密钥，请验证指纹是否与 060A 61C5 1B55 8A7F 742B 77AA C52F EB6B 621E 9F35 匹配，如果是，请接受。</p>
+</blockquote>
+<h3 id="2-5-Docker-的启动与停止"><a href="#2-5-Docker-的启动与停止" class="headerlink" title="2.5. Docker 的启动与停止"></a><strong>2.5. Docker 的启动与停止</strong></h3><figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 启动 docker</span></span><br><span class="line">sudo systemctl start docker</span><br><span class="line"><span class="comment"># 停止 docker</span></span><br><span class="line">sudo systemctl stop docker</span><br><span class="line"><span class="comment"># 重启 docker</span></span><br><span class="line">sudo systemctl restart docker</span><br><span class="line"><span class="comment"># 设置开机启动</span></span><br><span class="line">sudo systemctl <span class="built_in">enable</span> docker</span><br><span class="line"><span class="comment"># 查看 docker 状态</span></span><br><span class="line">sudo systemctl status docker</span><br><span class="line"><span class="comment"># 查看 docker 内容器的运行状态</span></span><br><span class="line">sudo docker stats</span><br><span class="line"><span class="comment"># 查看 docker 概要信息</span></span><br><span class="line">sudo docker info</span><br><span class="line"><span class="comment"># 查看 docker 帮助文档</span></span><br><span class="line">sudo docker --<span class="built_in">help</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-6-安装校验"><a href="#2-6-安装校验" class="headerlink" title="2.6. 安装校验"></a>2.6. 安装校验</h3><figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">docker -v</span><br><span class="line">docker version</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-配置镜像加速"><a href="#3-配置镜像加速" class="headerlink" title="3. 配置镜像加速"></a><strong>3. 配置镜像加速</strong></h2><p>Docker 从 Docker Hub 拉取镜像，因为是从国外获取，所以速度较慢，会出现以下情况： </p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">[root@localhost ~]<span class="comment"># docker run hello-world</span></span><br><span class="line">Unable to find image <span class="string">&#x27;hello-world:latest&#x27;</span> locally</span><br><span class="line">docker: Error response from daemon: Get https://registry-</span><br><span class="line">1.docker.io/v2/library/hello-world/manifests/latest: net/http: TLS</span><br><span class="line">handshake <span class="built_in">timeout</span>.</span><br><span class="line">See <span class="string">&#x27;docker run --help&#x27;</span>.</span><br></pre></td></tr></table></figure>
+
+<p>可以通过配置国内镜像源的方式，从国内获取镜像，提高拉取速度。</p>
+<p>中国科学技术大学开源镜像：<strong><a href="https://docker.mirrors.ustc.edu.cn/">https://docker.mirrors.ustc.edu.cn</a></strong> </p>
+<p>网易的开源镜像：<strong><a href="http://hub-mirror.c.163.com/">http://hub-mirror.c.163.com</a></strong> </p>
+<h3 id="3-1-编辑文件-daemon-json"><a href="#3-1-编辑文件-daemon-json" class="headerlink" title="3.1.编辑文件 daemon.json"></a>3.1.编辑文件 daemon.json</h3><figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">vi /etc/docker/daemon.json</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-在文件输入以下内容并保存。"><a href="#3-2-在文件输入以下内容并保存。" class="headerlink" title="3.2.在文件输入以下内容并保存。"></a>3.2.在文件输入以下内容并保存。</h3><figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;registry-mirrors&quot;</span>: [<span class="string">&quot;https://docker.mirrors.ustc.edu.cn&quot;</span>,<span class="string">&quot;http://hub-mirror.c.163.com&quot;</span>,<span class="string">&quot;https://registry.docker-cn.com&quot;</span>]</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">#或者使用自己的：</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;registry-mirrors&quot;</span>: [<span class="string">&quot;https://yxzrazem.mirror.aliyuncs.com&quot;</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="3-3-重新加配置信息及重启-Docker-服务。"><a href="#3-3-重新加配置信息及重启-Docker-服务。" class="headerlink" title="3.3.重新加配置信息及重启 Docker 服务。"></a>3.3.重新加配置信息及重启 Docker 服务。</h3><figure class="highlight sh"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 重新加载某个服务的配置文件</span></span><br><span class="line">sudo systemctl daemon-reload</span><br><span class="line"><span class="comment"># 重新启动 docker</span></span><br><span class="line">sudo systemctl restart docker</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-hello-world"><a href="#4-hello-world" class="headerlink" title="4. hello-world"></a><strong>4. hello-world</strong></h2><p>通过运行 hello-world 镜像来验证 Docker Engine 是否已正确安装。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">[root@docker ~]# docker run hello-world</span><br><span class="line">Unable to find image &#x27;hello-world:latest&#x27; locally # 本地找不到 helloworld 镜像</span><br><span class="line">latest: Pulling from library/hello-world 					# 拉取最新版本的 hello-world 镜像</span><br><span class="line">0e03bdcc26d7: Pull complete</span><br><span class="line">Digest:</span><br><span class="line">sha256:49a1c8800c94df04e9658809b006fd8a686cab8028d33cfba2cc0497242542</span><br><span class="line">02</span><br><span class="line">Status: Downloaded newer image for hello-world:latest</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">看到此消息表示您已正常安装</span></span><br><span class="line">Hello from Docker!</span><br><span class="line">This message shows that your installation appears to be working correctly.</span><br><span class="line"></span><br><span class="line">To generate this message, Docker took the following steps:</span><br><span class="line"> 1. The Docker client contacted the Docker daemon.</span><br><span class="line"> 2. The Docker daemon pulled the &quot;hello-world&quot; image from the Docker Hub.</span><br><span class="line">    (amd64)</span><br><span class="line"> 3. The Docker daemon created a new container from that image which runs the</span><br><span class="line">    executable that produces the output you are currently reading.</span><br><span class="line"> 4. The Docker daemon streamed that output to the Docker client, which sent it</span><br><span class="line">    to your terminal.</span><br><span class="line"></span><br><span class="line">To try something more ambitious, you can run an Ubuntu container with:</span><br><span class="line"><span class="meta prompt_"> $ </span><span class="language-bash">docker run -it ubuntu bash</span></span><br><span class="line"></span><br><span class="line">Share images, automate workflows, and more with a free Docker ID:</span><br><span class="line"> https://hub.docker.com/</span><br><span class="line"></span><br><span class="line">For more examples and ideas, visit:</span><br><span class="line"> https://docs.docker.com/get-started/</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>Linux</category>
+        <category>Docker/Podman</category>
+        <category>CentOS</category>
+        <category>教程</category>
+        <category>安装docker</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
+        <tag>CentOS</tag>
+        <tag>Docker/Podman</tag>
+        <tag>教程</tag>
+        <tag>安装Docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>使用Docker构建镜像</title>
+    <url>/2024/04/002%20%E4%BD%BF%E7%94%A8Docker%E6%9E%84%E5%BB%BA%E9%95%9C%E5%83%8F/</url>
+    <content><![CDATA[<h1 id="总览"><a href="#总览" class="headerlink" title="总览"></a>总览</h1><p>场景：测试的时候，需要提供POC测试服务器，如果提供的服务器是别人的，可能会因为对别人的服务器不熟悉：安装了什么应用？应用如何启停？网络如何启停？等等，这一系列的问题，都可能导致测试周期延长，给客户不好的体验。</p>
+<p>解决：针对这一系列的问题，我会从零到一的讲述，我是如何搭建属于自己的POC测试服务器。</p>
+<p>流程：我会将流程分为多个阶段，拆解每个阶段后，可以满足不同的人员，在不同的阶段进行不同的自定义。</p>
+<h1 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h1><p><img src="/../Image/POC%E6%9C%8D%E5%8A%A1%E5%99%A8.png" alt="POC服务器"></p>
+<h1 id="外链"><a href="#外链" class="headerlink" title="外链"></a>外链</h1><h2 id="创建基础OVA"><a href="#创建基础OVA" class="headerlink" title="创建基础OVA"></a>创建基础OVA</h2><p>概述：简而言之，其实就是一个CentOS系统中，安装了Docker，然后打包为一个OVA。</p>
+<p>构建步骤详见： [创建基础CentOS的OVA并安装docker和cockpit](..&#x2F;001 创建CentOS的OVA并安装Docker和Cockpit.md)</p>
+<p>..&#x2F;001 创建CentOS的OVA并安装Docker和Cockpit.md</p>
+<h2 id="使用docker构建镜像"><a href="#使用docker构建镜像" class="headerlink" title="使用docker构建镜像"></a>使用docker构建镜像</h2><p>概述：就是在上一步构建的CentOS的系统中，拉取想要的应用镜像，并且使用拉取的镜像创建一个应用的容器。</p>
+<p>只是多了一些其他的操作，比如如何迁移一个镜像，在没有网络的环境中，如何新增应用等基础容器玩法。</p>
+<p>详见： [使用Docker构建镜像，并使用镜像拉起容器](.&#x2F;002 使用Docker构建镜像.md) </p>
+]]></content>
+      <categories>
+        <category>Linux</category>
+        <category>Docker/Podman</category>
+        <category>CentOS</category>
+        <category>教程</category>
+        <category>POC测试机</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
+        <tag>CentOS</tag>
+        <tag>Docker/Podman</tag>
+        <tag>POC测试机</tag>
+        <tag>教程</tag>
+        <tag>OVA</tag>
+        <tag>POC</tag>
+      </tags>
   </entry>
 </search>
