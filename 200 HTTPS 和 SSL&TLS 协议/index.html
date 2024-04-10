@@ -1,0 +1,903 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>HTTPS 和 SSL&amp;TLS 协议 | lxl's Blog</title><meta name="author" content="LiuXinLei"><meta name="copyright" content="LiuXinLei"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="[toc] 扫盲 HTTPS 和 SSL&#x2F;TLS 协议[1]：背景知识、协议的需求、设计的难点★相关背景知识　　要说清楚 HTTPS 协议的实现原理，至少需要如下几个背景知识。  大致了解几个基本术语（HTTPS、SSL、TLS）的含义 大致了解 HTTP 和 TCP 的关系（尤其是“短连接”VS“长连接”） 大致了解加密算法的概念（尤其是“对称加密与非对称加密”的区别） 大致了解 CA">
+<meta property="og:type" content="article">
+<meta property="og:title" content="HTTPS 和 SSL&amp;TLS 协议">
+<meta property="og:url" content="https://laushinelae.github.io/200%20HTTPS%20%E5%92%8C%20SSL&TLS%20%E5%8D%8F%E8%AE%AE/index.html">
+<meta property="og:site_name" content="lxl&#39;s Blog">
+<meta property="og:description" content="[toc] 扫盲 HTTPS 和 SSL&#x2F;TLS 协议[1]：背景知识、协议的需求、设计的难点★相关背景知识　　要说清楚 HTTPS 协议的实现原理，至少需要如下几个背景知识。  大致了解几个基本术语（HTTPS、SSL、TLS）的含义 大致了解 HTTP 和 TCP 的关系（尤其是“短连接”VS“长连接”） 大致了解加密算法的概念（尤其是“对称加密与非对称加密”的区别） 大致了解 CA">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://laushinelae.github.io/img/avatar.gif">
+<meta property="article:published_time" content="2024-04-10T11:13:12.000Z">
+<meta property="article:modified_time" content="2024-04-10T03:00:23.057Z">
+<meta property="article:author" content="LiuXinLei">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="HTTP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://laushinelae.github.io/img/avatar.gif"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://laushinelae.github.io/200%20HTTPS%20%E5%92%8C%20SSL&amp;TLS%20%E5%8D%8F%E8%AE%AE/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=4.13.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.33/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-1246116072676573',
+  enable_page_level_ads: 'true'
+});</script><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?4872e61fb4e7b0a92824b79c303ea4c5";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "ls86ct5gqc");</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体中文","cht_to_chs":"你已切换为简体中文","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.11.1/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'HTTPS 和 SSL&TLS 协议',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-04-10 11:00:23'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+        if (t === 'dark') activateDarkMode()
+        else if (t === 'light') activateLightMode()
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><span id="fps">></span><!-- hexo injector head_end start --><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.1.1"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.gif" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">16</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a href="/" title="lxl's Blog"><span class="site-name">lxl's Blog</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">HTTPS 和 SSL&amp;TLS 协议</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-04-10T11:13:12.000Z" title="发表于 2024-04-10 19:13:12">2024-04-10</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-04-10T03:00:23.057Z" title="更新于 2024-04-10 11:00:23">2024-04-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%9F%A5%E8%AF%86%E5%85%A5%E8%84%91/">知识入脑</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">17.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>54分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="HTTPS 和 SSL&amp;TLS 协议"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>[toc]</p>
+<h1 id="扫盲-HTTPS-和-SSL-TLS-协议-1-：背景知识、协议的需求、设计的难点"><a href="#扫盲-HTTPS-和-SSL-TLS-协议-1-：背景知识、协议的需求、设计的难点" class="headerlink" title="扫盲 HTTPS 和 SSL&#x2F;TLS 协议[1]：背景知识、协议的需求、设计的难点"></a>扫盲 HTTPS 和 SSL&#x2F;TLS 协议[1]：背景知识、协议的需求、设计的难点</h1><h2 id="★相关背景知识"><a href="#★相关背景知识" class="headerlink" title="★相关背景知识"></a>★相关背景知识</h2><p>　　要说清楚 HTTPS 协议的实现原理，至少需要如下几个背景知识。</p>
+<ol>
+<li>大致了解几个基本术语（HTTPS、SSL、TLS）的含义</li>
+<li>大致了解 HTTP 和 TCP 的关系（尤其是“短连接”VS“长连接”）</li>
+<li>大致了解加密算法的概念（尤其是“对称加密与非对称加密”的区别）</li>
+<li>大致了解 CA 证书的用途</li>
+</ol>
+<p> 　考虑到很多技术菜鸟可能不了解上述背景，俺先用最简短的文字描述一下。如果你自认为不是菜鸟，请略过本章节，直接去看“HTTPS 协议的需求”。</p>
+<h3 id="◇先澄清几个术语——HTTPS、SSL、TLS"><a href="#◇先澄清几个术语——HTTPS、SSL、TLS" class="headerlink" title="◇先澄清几个术语——HTTPS、SSL、TLS"></a>◇先澄清几个术语——HTTPS、SSL、TLS</h3><p><strong>1. “HTTP”是干嘛用滴？</strong><br> 　首先，HTTP 是一个网络协议，是专门用来帮你传输 Web 内容滴。关于这个协议，就算你不了解，至少也听说过吧？比如你访问俺的博客的主页，浏览器地址栏会出现如下的网址：</p>
+<blockquote>
+<p><strong>http</strong>:&#x2F;&#x2F;program-think.blogspot.com&#x2F;</p>
+</blockquote>
+<p>　　俺加了粗体的部分就是指 HTTP 协议。大部分网站都是通过 HTTP 协议来传输 Web 页面、以及 Web 页面上包含的各种东东（图片、CSS 样式、JS 脚本）。<br> 　（注：当年写这篇的时候，Google 的 blogspot 博客平台【尚未】支持全站 HTTPS，所以在上述举例中，主页的网址以 <code>http://</code> 开头）</p>
+<p><strong>2. “SSL&#x2F;TLS”是干嘛用滴？</strong><br> 　SSL 是洋文“Secure Sockets Layer”的缩写，中文叫做“安全套接层”。它是在上世纪90年代中期，由<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E7%B6%B2%E6%99%AF">网景公司</a>设计的。（顺便插一句，网景公司不光发明了 SSL，还发明了很多 Web 的基础设施——比如“CSS 样式表”和“JS 脚本”）<br> 　为啥要发明 SSL 这个协议捏？因为原先互联网上使用的 HTTP 协议是明文的，存在很多缺点——比如传输内容会被偷窥（嗅探）和篡改。发明 SSL 协议，就是为了解决这些问题。<br> 　到了1999年，SSL 因为应用广泛，已经成为互联网上的事实标准。IETF 就在那年把 SSL 标准化。标准化之后的名称改为 TLS（是“Transport Layer Security”的缩写），中文叫做“传输层安全协议”。<br> 　很多相关的文章都把这两者并列称呼（SSL&#x2F;TLS），因为这两者可以视作同一个东西的不同阶段。</p>
+<p><strong>3. “HTTPS”是啥意思？</strong><br> 　解释完 HTTP 和 SSL&#x2F;TLS，现在就可以来解释 HTTPS 啦。咱们通常所说的 HTTPS 协议，说白了就是“HTTP  协议”和“SSL&#x2F;TLS 协议”的组合。你可以把 HTTPS 大致理解为——“HTTP over SSL”或“HTTP over TLS”（反正 SSL 和 TLS 差不多，你可以把这俩当作同义词）。</p>
+<h3 id="◇再来说说-HTTP-协议的特点"><a href="#◇再来说说-HTTP-协议的特点" class="headerlink" title="◇再来说说 HTTP 协议的特点"></a>◇再来说说 HTTP 协议的特点</h3><p>　　作为背景知识介绍，还需要再稍微谈一下 HTTP 协议本身的特点。HTTP 本身有很多特点，考虑到篇幅有限，俺只谈那些和 HTTPS 相关的特点。</p>
+<p><strong>1. HTTP 的版本和历史</strong><br> 　如今咱们用的 HTTP 协议，版本号是 1.1（也就是 HTTP 1.1）。这个 1.1 版本是1995年底开始起草的（技术文档是 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc2068">RFC2068</a>），并在1999年正式发布（技术文档是 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc2616">RFC2616</a>）。<br> 　在 1.1 之前，还有曾经出现过两个版本“0.9 和 1.0”，其中的 HTTP 0.9 【没有】被广泛使用，而 HTTP 1.0 被广泛使用过。<br> 　另外，据说明年（2015）<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E5%B7%A5%E7%A8%8B%E4%BB%BB%E5%8A%A1%E7%BB%84">IETF</a> 就要发布 HTTP 2.0 的标准了。俺拭目以待。</p>
+<p><strong>2. HTTP 和 TCP 之间的关系</strong><br> 　简单地说，TCP 协议是 HTTP 协议的基石——HTTP 协议需要依靠 TCP 协议来传输数据。<br><strong>在网络分层模型中，TCP 被称为“传输层协议”，而 HTTP 被称为“应用层协议”。</strong>有很多常见的应用层协议是以 TCP 为基础的，比如“FTP、SMTP、POP、IMAP”等。<br> 　TCP 被称为“面向连接”的传输层协议。关于它的具体细节，俺就不展开了（否则篇幅又失控了）。你只需知道：传输层主要有两个协议，分别是 TCP 和 UDP。TCP 比 UDP 更可靠。你可以把 TCP 协议想象成某个水管，发送端这头进水，接收端那头就出水。并且 TCP  协议能够确保，先发送的数据先到达（与之相反，UDP 不保证这点）。</p>
+<p><strong>3. HTTP 协议如何使用 TCP 连接？</strong><br> 　HTTP 对 TCP 连接的使用，分为两种方式：俗称“短连接”和“长连接”（“长连接”又称“持久连接”，洋文叫做“Keep-Alive”或“Persistent Connection”）<br> 　假设有一个网页，里面包含好多图片，还包含好多【外部的】CSS 文件和 JS 文件。在“短连接”的模式下，浏览器会先发起一个 TCP  连接，拿到该网页的 HTML 源代码（拿到 HTML 之后，这个 TCP  连接就关闭了）。然后，浏览器开始分析这个网页的源码，知道这个页面包含很多外部资源（图片、CSS、JS）。然后针对【每一个】外部资源，再分别发起一个个 TCP 连接，把这些文件获取到本地（同样的，每抓取一个外部资源后，相应的 TCP 就断开）<br> 　相反，如果是“长连接”的方式，浏览器也会先发起一个 TCP 连接去抓取页面。但是抓取页面之后，该 TCP  连接并不会立即关闭，而是暂时先保持着（所谓的“Keep-Alive”）。然后浏览器分析 HTML 源码之后，发现有很多外部资源，就用刚才那个  TCP 连接去抓取此页面的外部资源。</p>
+<p> 　在 HTTP 1.0 版本，【默认】使用的是“短连接”（那时候是 Web 诞生初期，网页相对简单，“短连接”的问题不大）；<br> 　到了1995年底开始制定 HTTP 1.1  草案的时候，网页已经开始变得复杂（网页内的图片、脚本越来越多了）。这时候再用短连接的方式，效率太低下了（因为建立 TCP  连接是有“时间成本”和“CPU 成本”滴）。所以，在 HTTP 1.1 中，【默认】采用的是【Keep-Alive】的方式。<br> 　【HTTP Keep-Alive】有时候也叫做“HTTP persistent connection”或“HTTP connection reuse”。关于它的更多介绍，可以参见维基百科词条（在“<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/HTTP_persistent_connection">这里</a>”）</p>
+<h3 id="◇谈谈“对称加密”和“非对称加密”的概念"><a href="#◇谈谈“对称加密”和“非对称加密”的概念" class="headerlink" title="◇谈谈“对称加密”和“非对称加密”的概念"></a>◇谈谈“对称加密”和“非对称加密”的概念</h3><p><strong>1. 啥是“加密”和“解密”？</strong><br> 　通俗而言，你可以把“加密”和“解密”理解为某种【互逆的】数学运算。就好比“加法和减法”互为逆运算、“乘法和除法”互为逆运算。<br> 　“加密”的过程，就是把“明文”变成“密文”的过程；反之，“解密”的过程，就是把“密文”变为“明文”。在这两个过程中，都需要一个关键的东东——叫做“密钥”——来参与数学运算。</p>
+<p><strong>2. 啥是“对称加密”？</strong><br> 　所谓的“对称加密技术”，意思就是说：“加密”和“解密”使用【相同的】密钥。这个比较好理解。就好比你用 7zip 或 WinRAR  创建一个带密码（口令）的加密压缩包。当你下次要把这个压缩文件解开的时候，你需要输入【同样的】密码。在这个例子中，密码&#x2F;口令就如同刚才说的“密钥”。</p>
+<p><strong>3. 啥是“非对称加密”？</strong><br> 　所谓的“非对称加密技术”，意思就是说：“加密”和“解密”使用【不同的】密钥。这玩意儿比较难理解，也比较难想到。当年“非对称加密”的发明，还被誉为“密码学”历史上的一次革命。<br> 　由于篇幅有限，对“非对称加密”这个话题，俺就不展开了。有空的话，再单独写一篇扫盲。</p>
+<p><strong>4. 各自有啥优缺点？</strong><br> 　看完刚才的定义，很显然：（从功能角度而言）“非对称加密”能干的事情比“对称加密”要多。这是“非对称加密”的优点。但是“非对称加密”的实现，通常需要涉及到“复杂数学问题”。所以，“非对称加密”的性能通常要差很多（相对于“对称加密”而言）。<br> 　这两者的优缺点，也影响到了 SSL 协议的设计。</p>
+<h3 id="◇CA-证书的原理及用途"><a href="#◇CA-证书的原理及用途" class="headerlink" title="◇CA 证书的原理及用途"></a>◇CA 证书的原理及用途</h3><p>　　关于这方面，请看俺4年前写的《<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2010/02/introduce-digital-certificate-and-ca.html">数字证书及 CA 的扫盲介绍</a>》。这里就不再重复唠叨了，免得篇幅太长。</p>
+<h2 id="★HTTPS-协议的【需求】是啥？"><a href="#★HTTPS-协议的【需求】是啥？" class="headerlink" title="★HTTPS 协议的【需求】是啥？"></a>★HTTPS 协议的【需求】是啥？</h2><p>　　花了好多口水，终于把背景知识说完了。下面正式进入正题。先来说说当初设计 HTTPS 是为了满足哪些需求？<br> 　很多介绍 HTTPS 的文章一上来就给你讲实现细节。个人觉得：这是【不好】的做法。早在2009年开博的时候，发过一篇《<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2009/02/study-technology-in-three-steps.html">学习技术的三部曲：WHAT、HOW、WHY</a>》，其中谈到“WHY 型问题”的重要性。如果一上来就丢给你一大堆协议细节，你充其量只能知道 WHAT 和 HOW，无法理解 WHY。俺在前一个章节讲了“背景知识”，在这个章节讲了“需求”，这就有助于你理解：当初【<strong>为什么</strong>】要设计成这样？——这就是 WHY 型的问题。</p>
+<h3 id="◇兼容性"><a href="#◇兼容性" class="headerlink" title="◇兼容性"></a>◇兼容性</h3><p>　　因为是先有 HTTP 再有 HTTPS。所以，HTTPS 的设计者肯定要考虑到对原有 HTTP 的兼容性。<br> 　这里所说的兼容性包括很多方面。比如已有的 Web 应用要尽可能无缝地迁移到 HTTPS；比如对浏览器厂商而言，改动要尽可能小；……<br> 　基于“兼容性”方面的考虑，很容易得出如下几个结论：</p>
+<ol>
+<li>HTTPS 还是要基于 TCP 来传输</li>
+</ol>
+<p> （如果改为 UDP 作传输层，无论是 Web 服务端还是浏览器客户端，都要大改——动静太大，伤筋动骨）</p>
+<ol start="2">
+<li>单独使用一个新的协议，把 HTTP 协议包裹起来</li>
+</ol>
+<p> （所谓的“HTTP over SSL”，实际上是在原有的 HTTP 数据外面加了一层 SSL 的封装。HTTP 协议原有的 GET、POST 之类的机制，基本上原封不动）</p>
+<p> 　打个比方：如果原来的 HTTP 是塑料水管，容易被戳破；那么如今新设计的 HTTPS 就像是在原有的塑料水管之外，再包一层金属水管。一来，原有的塑料水管照样运行；二来，用金属加固了之后，不容易被戳破。</p>
+<h3 id="◇可扩展性"><a href="#◇可扩展性" class="headerlink" title="◇可扩展性"></a>◇可扩展性</h3><p>　　前面说了，HTTPS 相当于是“HTTP over SSL”。<br> 　如果 SSL 这个协议在“可扩展性”方面的设计足够牛逼，那么它除了能跟 HTTP 搭配，还能够跟其它的应用层协议搭配。岂不美哉？<br> 　现在看来，当初设计 SSL 的人确实比较牛。如今的 SSL&#x2F;TLS 可以跟很多常用的应用层协议（比如：FTP、SMTP、POP、Telnet）搭配，来强化这些应用层协议的安全性。</p>
+<p> 　接着刚才打的比方：如果把 SSL&#x2F;TLS 视作一根用来加固的金属管，它不仅可以用来加固输水的管道，还可以用来加固输煤气的管道。</p>
+<h3 id="◇保密性（防泄密）"><a href="#◇保密性（防泄密）" class="headerlink" title="◇保密性（防泄密）"></a>◇保密性（防泄密）</h3><p>　　HTTPS 需要做到足够好的保密性。<br> 　说到保密性，首先要能够对抗“嗅探”（圈内行话叫 Sniffer）。所谓的“嗅探”，通俗而言就是监视你的网络传输流量。如果你使用【明文】的 HTTP 上网，那么监视者通过嗅探，就知道你在访问哪些网站的哪些页面。<br> 　嗅探是最低级的攻击手法。除了嗅探，HTTPS 还需要能对抗其它一些稍微高级的攻击手法——比如“重放攻击”（后面讲协议原理的时候，会再聊）。</p>
+<h3 id="◇完整性（防篡改）"><a href="#◇完整性（防篡改）" class="headerlink" title="◇完整性（防篡改）"></a>◇完整性（防篡改）</h3><p>　　除了“保密性”，还有一个同样重要的目标是“确保完整性”。关于“完整性”这个概念，在之前的博文《<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2013/02/file-integrity-check.html">扫盲文件完整性校验——关于散列值和数字签名</a>》中大致提过。健忘的同学再去温习一下。<br> 　在发明 HTTPS 之前，由于 HTTP 是明文的，不但容易被嗅探，还容易被篡改。<br> 　举个例子：<br> 　比如咱们天朝的网络运营商（ISP）都比较流氓，经常有网友抱怨说访问某网站（本来是没有广告的），竟然会跳出很多中国电信的广告。为啥会这样捏？因为你的网络流量需要经过 ISP 的线路才能到达公网。如果你使用的是明文的 HTTP，ISP 很容易就可以在你访问的页面中植入广告。<br> 　所以，当初设计 HTTPS 的时候，还有一个需求是“确保 HTTP 协议的内容【不】被篡改”。</p>
+<h3 id="◇真实性（防假冒）"><a href="#◇真实性（防假冒）" class="headerlink" title="◇真实性（防假冒）"></a>◇真实性（防假冒）</h3><p>　　在谈到 HTTPS 的需求时，“真实性”经常被忽略。其实“真实性”的重要程度【不亚于】前面的“保密性”和“完整性”。<br> 　举个例子：<br> 　你因为使用网银，需要访问该网银的 Web 站点。那么，你如何确保你访问的网站确实是你想访问的网站？（这话有点绕口令）<br> 　有些天真的同学会说：通过看网址里面的域名，来确保。为啥说这样的同学是“天真的”？因为 DNS 系统本身是不可靠的（尤其是在设计 SSL  的那个年代，连 DNSSEC 都还没发明）。由于 DNS 的不可靠（存在“域名欺骗”和“域名劫持”），你看到的网址里面的域名【未必】是真实滴！<br> 　（不了解“域名欺骗”和“域名劫持”的同学，可以参见俺之前写的《<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/01/dns.html">扫盲 DNS 原理，兼谈“域名劫持”和“域名欺骗&#x2F;域名污染”</a>》）<br> 　所以，HTTPS 协议必须有某种机制来确保“真实性”的需求（至于如何确保，后面会细聊）。</p>
+<h3 id="◇性能"><a href="#◇性能" class="headerlink" title="◇性能"></a>◇性能</h3><p>　　再来说最后一个需求——性能。<br> 　引入 HTTPS 之后，【不能】导致性能变得太差。否则的话，谁还愿意用？<br> 　为了确保性能，SSL 的设计者至少要考虑如下几点：</p>
+<ol>
+<li>如何选择加密算法（对称加密 or 非对称加密）？</li>
+<li>如何兼顾 HTTP 采用的【短连接】TCP 方式？</li>
+</ol>
+<p> （再次提醒：SSL 是在1995年之前开始设计滴。那是 Web 的远古时代——HTTP 协议版本还只是 1.0；默认使用【短连接】的 TCP 方式；默认【不】启用 Keep-Alive）</p>
+<h3 id="◇小结"><a href="#◇小结" class="headerlink" title="◇小结"></a>◇小结</h3><p>　　以上就是设计 SSL 协议时，必须兼顾的各种需求。后面聊协议的实现时，俺会拿 SSL 协议的特点跟前面的需求作对照。看看这些需求是如何被逐一满足滴。</p>
+<h2 id="★设计-HTTPS-协议的主要【难点】是啥？"><a href="#★设计-HTTPS-协议的主要【难点】是啥？" class="headerlink" title="★设计 HTTPS 协议的主要【难点】是啥？"></a>★设计 HTTPS 协议的主要【难点】是啥？</h2><p>　　设计 HTTPS 这个协议，有好几个难点。俺个人认为：“密钥交换”是最大的难点（没有之一）。<br> 　在传统的密码学场景中，假如张三要跟李四建立一个加密通讯的渠道，双方事先要约定好使用哪种加密算法？同时也要约定好使用的密钥是啥？在这个场景中，加密算法的【类型】让旁人知道，没太大关系。但是密钥【千万不能】让旁人知道。一旦旁人知道了密钥，自然就可以破解通讯的密文，得到明文。<br> 　好，现在回到 HTTPS 的场景。<br> 　当你访问某个公网的网站，你的浏览器和网站的服务器之间，如果要建立加密通讯，必然要商量好双方使用啥算法，啥密钥。——在网络通讯术语中，这个过程称之为“握手”（洋文叫“handshake”）。在握手阶段，因为加密方式还没有协商好，所以握手阶段的通讯必定是【明文】滴！既然是明文，自然有可能被第三方偷窥到。然后，还要考虑到双方之间隔着一个【互联网】，啥样的事情都可能发生（不光会有“数据偷窥”，还会有【数据篡改】）。<br> 　因此，在握手的过程中，如何做到安全地交换密钥信息，而不让周围的第三方看到。这就是设计 HTTPS 最大的难点。</p>
+<h2 id="★结尾"><a href="#★结尾" class="headerlink" title="★结尾"></a>★结尾</h2><p>　　本文费这么多口水，来介绍 HTTPS 的“需求”和“难点”，为啥捏？因为只有当你了解这些，后面介绍 SSL&#x2F;TLS 的实现原理时，你才能理解——当初为啥要把协议设计成这个样子。</p>
+<h1 id="扫盲-HTTPS-和-SSL-TLS-协议-2-：可靠密钥交换的难点，以及身份认证的必要性"><a href="#扫盲-HTTPS-和-SSL-TLS-协议-2-：可靠密钥交换的难点，以及身份认证的必要性" class="headerlink" title="[扫盲 HTTPS 和 SSL&#x2F;TLS 协议[2]：可靠密钥交换的难点，以及身份认证的必要性]"></a>[扫盲 HTTPS 和 SSL&#x2F;TLS 协议[2]：可靠密钥交换的难点，以及身份认证的必要性]</h1><h2 id="★先插播一个安全通告"><a href="#★先插播一个安全通告" class="headerlink" title="★先插播一个安全通告"></a>★先插播一个安全通告</h2><p>　　说来凑巧，就在<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-0.html#index">本系列</a>刚开播之后没几天（11月11日），微软爆了一个<a target="_blank" rel="noopener" href="https://technet.microsoft.com/library/security/ms14-066">跟 SSL&#x2F;TLS 相关的高危漏洞</a>，<strong>影响【几乎所有的】Windows 平台</strong>。至此，【所有】主流的 SSL&#x2F;TLS 协议栈（至少包括：开源的 OpenSSL、开源的 GnuTLS、微软的 SSP、苹果的 SecureTransport），全都在今年爆了高危漏洞。看来俺这个系列生逢其时啊！<br> 　个人觉得：【2014年】必将在信息安全历史上留下醒目的记录。<br> 　用 Windows 系统的同学，这几天要尽快升级微软的“安全更新”。因为该漏洞会导致“远程代码执行”，非常危险。<br> 　（微软的公告中没有提及 Win2000 和 WinXP 是因为这俩已经过了“产品支持周期”。【不】等于说这俩没问题）</p>
+<hr>
+<p>　　在<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-1.html">本系列的前一篇</a>，已经介绍了相关的背景知识以及设计 SSL 需要考虑的需求。当时俺提到：设计 HTTPS 的最大难点（没有之一）是——如何在互联网上进行安全的“密钥交换”。今天就来讲讲密钥交换的难点和解决方法（暂不谈技术实现）。</p>
+<h2 id="★方案1——单纯用“对称加密算法”的可行性"><a href="#★方案1——单纯用“对称加密算法”的可行性" class="headerlink" title="★方案1——单纯用“对称加密算法”的可行性"></a>★方案1——单纯用“对称加密算法”的可行性</h2><p>　　首先简单阐述一下，“单纯用对称加密”为啥是【不可行】滴。<br> 　如果“单纯用对称加密”，浏览器和网站之间势必先要交换“对称加密的密钥”。<br> 　如果这个密钥直接用【明文】传输，很容易就会被第三方（有可能是“攻击者”）偷窥到；如果这个密钥用密文传输，那就再次引入了“如何交换加密密钥”的问题——这就变成“先有鸡还是先有蛋”的循环逻辑了。<br> 　所以，【单纯用】对称加密，是没戏滴。</p>
+<h2 id="★方案2——单纯用“非对称加密算法”的风险"><a href="#★方案2——单纯用“非对称加密算法”的风险" class="headerlink" title="★方案2——单纯用“非对称加密算法”的风险"></a>★方案2——单纯用“非对称加密算法”的风险</h2><p>　　说完“对称加密”，再来说说“非对称加密”。<br> 　在<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-0.html#index">本系列</a>的前一篇谈“<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-1.html">背景知识</a>”的时候，已经大致介绍过“非对称加密”的特点——“加密和解密采用【不同】的密钥”。基于这个特点，可以避开前面提到的“循环逻辑”的困境。大致的步骤如下：</p>
+<blockquote>
+<p><strong>第1步</strong><br> 网站服务器先基于“【非】对称加密算法”，随机生成一个“密钥对”（为叙述方便，称之为“k1 和 k2”）。因为是随机生成的，目前为止，只有网站服务器才知道 k1 和 k2。</p>
+<p> <strong>第2步</strong><br> 网站把 k1 保留在自己手中，把 k2 用【明文】的方式发送给访问者的浏览器。<br> 因为 k2 是明文发送的，自然有可能被偷窥。不过不要紧。即使偷窥者拿到 k2，也【极难】根据 k2 推算出 k1（注：这是由“非对称加密算法”从数学上保证滴）</p>
+<p> <strong>第3步</strong><br> 浏览器拿到 k2 之后，先【随机生成】第三个对称加密的密钥（简称 k）。<br> 然后用 k2 加密 k，得到 k’（k’ 是 k 的加密结果）<br> 浏览器把 k’ 发送给网站服务器。</p>
+<p> 由于 k1 和 k2 是成对的，所以只有 k1 才能解密 k2 的加密结果。<br> 因此这个过程中，即使被第三方偷窥，第三方也【无法】从 k’ 解密得到 k</p>
+<p> <strong>第4步</strong><br> 网站服务器拿到 k’ 之后，用 k1 进行解密，得到 k<br> 至此，浏览器和网站服务器就完成了密钥交换，双方都知道 k，而且【貌似】第三方无法拿到 k<br> 然后，双方就可以用 k 来进行数据双向传输的加密。</p>
+</blockquote>
+<p><strong>现在，给大伙儿留一点【思考时间】——你觉得上述过程是否严密？如果不严密，漏洞在哪里？</strong></p>
+<p> 建</p>
+<p> 议</p>
+<p> 你</p>
+<p> 思</p>
+<p> 考</p>
+<p> 一</p>
+<p> 柱</p>
+<p> 香</p>
+<p> 的</p>
+<p> 时</p>
+<p> 间</p>
+<p> ，</p>
+<p> 再</p>
+<p> 来</p>
+<p> 看</p>
+<p> 答</p>
+<p> 案</p>
+<p> 　OK，现在俺来揭晓答案（希望你没有事先偷看）<br><strong>“方案2”依然是【不】安全滴</strong>——虽然“方案2”可以在一定程度上防止网络数据的“偷窥&#x2F;嗅探”，但是【无法】防范网络数据的【篡改】。<br> 　假设有一个攻击者处于“浏览器”和“网站服务器”的通讯线路之间，并且这个攻击者具备“【修改】双方传输数据”的能力。那么，这个攻击者就可以攻破“方案2”。具体的攻击过程如下：</p>
+<blockquote>
+<p><strong>第1步</strong><br> 这一步跟原先一样——服务器先随机生成一个“非对称的密钥对”k1 和 k2（此时只有网站知道 k1 和 k2）</p>
+<p> <strong>第2步</strong><br> 当网站发送 k2 给浏览器的时候，攻击者截获 k2，保留在自己手上。<br> 然后攻击者自己生成一个【伪造的】密钥对（以下称为 pk1 和 pk2）。<br> 攻击者把 pk2 发送给浏览器。</p>
+<p> <strong>第3步</strong><br> 浏览器收到 pk2，以为 pk2 就是网站发送的。<br> 浏览器不知情，依旧随机生成一个对称加密的密钥 k，然后用 pk2 加密 k，得到密文的 k’<br> 浏览器把 k’ 发送给网站。<br> （以下是关键）<br> 发送的过程中，再次被攻击者截获。<br> 因为 pk1 pk2 都是攻击者自己生成的，所以攻击者自然就可以用 pk1 来解密 k’ 得到 k<br> 然后，攻击者拿到 k 之后，用之前截获的 k2 重新加密，得到 k’’，并把 k’’ 发送给网站。</p>
+<p> <strong>第4步</strong><br> 网站服务器收到了 k’’ 之后，用自己保存的 k1 可以正常解密，所以网站方面不会起疑心。<br> 至此，攻击者完成了一次漂亮的偷梁换柱，而且让双方都没有起疑心。</p>
+</blockquote>
+<p><strong>上述过程，也就是传说中大名鼎鼎的【中间人攻击】</strong>（洋文叫做“Man-In-The-Middle attack”，缩写是 MITM）。<br> 　“中间人攻击”有很多种“类型”，刚才演示的是针对“【单纯的】非对称加密”的中间人攻击。至于“中间人攻击”的其它类型，俺在<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-0.html#index">本系列</a>的后续博文中，还会再提到。</p>
+<p> 　为了更加形象，补充两张示意图，分别对应“偷窥模式”和“中间人模式”。让你更直观地体会两者的差异。</p>
+<p><img src="https://lh6.googleusercontent.com/TgLYAxKnfpV6t0ytFvi9C4DOt5GsEgCvQ-PQzSfQ8QGdhjBOLaWLXBVuCTAd2IAmUnIgyaRPxqv49Prj02gw7K0BhKz-bHQWXCDOx_qH5KpXOAcCDixixeN1RNR3FOzbhsy9" alt="不见图 请翻墙"></p>
+<p><img src="https://lh4.googleusercontent.com/Db13nQFIPF2NxJ518PjXpn24-qKPSTFdFE8tmQQBWOALwTVu6a8e-HILEaLli8SjxE-7AlW8eERL-5xPjCkp1UcH7NM3XPrgWhk0GEEd9w6jP2F3kkeBwxQdpVzxwxGW9S0j" alt="不见图 请翻墙"></p>
+<h2 id="★方案2失败的根源——缺乏【可靠的】身份认证"><a href="#★方案2失败的根源——缺乏【可靠的】身份认证" class="headerlink" title="★方案2失败的根源——缺乏【可靠的】身份认证"></a>★方案2失败的根源——缺乏【可靠的】身份认证</h2><p>　　为啥“方案2”会失败捏？<br> 　除了俺在图中提到的“攻击者具备篡改数据的能力”，还有另一点关键点——“方案2缺乏身份认证机制”。<br> 　正是因为“缺乏身份认证机制”，所以当攻击者一开始截获 k2 并把自己伪造的 pk2 发送给浏览器时，浏览器无法鉴别：自己收到的密钥是不是真的来自于网站服务器。<br> 　假如具备某种【可靠的】身份认证机制，即使攻击者能够篡改数据，但是篡改之后的数据很容易被识破。那篡改也就失去了意义。</p>
+<h2 id="★【身份认证】的几种方式"><a href="#★【身份认证】的几种方式" class="headerlink" title="★【身份认证】的几种方式"></a>★【身份认证】的几种方式</h2><p>　　下面，俺来介绍几种常见的“身份认证原理”。</p>
+<h3 id="◇基于某些“私密的共享信息”"><a href="#◇基于某些“私密的共享信息”" class="headerlink" title="◇基于某些“私密的共享信息”"></a>◇基于某些“私密的共享信息”</h3><p>　　为了解释“私密的共享信息”这个概念，咱们先抛开“信息安全”，谈谈日常生活中的某个场景。<br> 　假设你有一个久未联系的老朋友。因为时间久远，你已经没有此人的联系方式了。某天，此人突然给你发了一封电子邮件。<br> 　那么，你如何确保——发邮件的人确实是你的老朋友捏？<br> 　有一个办法就是：你用邮件向对方询问某个私密的事情（这个事情只有你和你的这个朋友知道，其他人不知道）。如果对方能够回答出来，那么对方【很有可能】确实是你的老朋友。<br> 　从这个例子可以看出，如果通讯双方具有某些“私密的共享信息”（只有双方知道，第三方不知道），就能以此为基础，进行身份认证，从而建立信任。</p>
+<h3 id="◇基于双方都信任的“公证人”"><a href="#◇基于双方都信任的“公证人”" class="headerlink" title="◇基于双方都信任的“公证人”"></a>◇基于双方都信任的“公证人”</h3><p>　　“私密的共享信息”，通常需要双方互相比较熟悉，才行得通。如果双方本来就互不相识，如何进行身份认证以建立信任关系捏？<br> 　这时候还有另一个办法——依靠双方都信任的某个“公证人”来建立信任关系。<br> 　如今 C2C 模式的电子商务，其实用的就是这种方式——由电商平台充当公证人，让买家与卖家建立某种程度的信任关系。<br> 　考虑到如今的网购已经相当普及，大伙儿应该对这类模式很熟悉吧。所以俺就不浪费口水了。</p>
+<h2 id="★如何解决-SSL-的【身份认证】问题——CA-的引入"><a href="#★如何解决-SSL-的【身份认证】问题——CA-的引入" class="headerlink" title="★如何解决 SSL 的【身份认证】问题——CA 的引入"></a>★如何解决 SSL 的【身份认证】问题——CA 的引入</h2><p>　　说完身份认证的方式&#x2F;原理，再回到 SSL&#x2F;TLS 的话题上。<br> 　对于 SSL&#x2F;TLS 的应用场景，由于双方（“浏览器”和“网站服务器”）通常都是素不相识滴，显然【不可能】采用第一种方式（私密的共享信息），而只能采用第二种方式（依赖双方都信任的“公证人”）。<br> 　那么，谁来充当这个公证人捏？这时候，CA 就华丽地登场啦。<br> 　所谓的 CA，就是“数字证书认证机构”的缩写，洋文全称叫做“Certificate Authority”。关于 CA 以及 CA 颁发的“CA 证书”，俺已经写过一篇教程：《<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2010/02/introduce-digital-certificate-and-ca.html">数字证书及 CA 的扫盲介绍</a>》，介绍其基本概念和功能。所以，此处就不再重复唠叨了。<br> 　如果你看完那篇 CA 的扫盲，你自然就明白——CA 完全有资格和能力，充当这个“公证人”的角色。</p>
+<h2 id="★方案3——基于-CA-证书进行密钥交换"><a href="#★方案3——基于-CA-证书进行密钥交换" class="headerlink" title="★方案3——基于 CA 证书进行密钥交换"></a>★方案3——基于 CA 证书进行密钥交换</h2><p>　　其实“方案3”跟“方案2”很像的，主要差别在于——“方案3”增加了“CA  数字证书”这个环节。所谓的数字证书，技术上依赖的还是前面提到的“非对称加密”。为了描述“CA 证书”在 SSL&#x2F;TLS  中的作用，俺大致说一下原理（仅仅是原理，具体的技术实现要略复杂些）：</p>
+<blockquote>
+<p><strong>第1步（这是“一次性”的准备工作）</strong><br> 网站方面首先要花一笔银子，在某个 CA 那里购买一个数字证书。<br> 该证书通常会对应几个文件：其中一个文件包含公钥，还有一个文件包含私钥。<br> 此处的“私钥”，相当于“方案2”里面的 k1；而“公钥”类似于“方案2”里面的 k2。<br> 网站方面必须在 Web 服务器上部署这两个文件。</p>
+<p> 所谓的“公钥”，顾名思义就是可以公开的 key；而所谓的“私钥”就是私密的 key。<br> 其实前面已经说过了，这里再唠叨一下：<br> “非对称加密算法”从数学上确保了——即使你知道某个公钥，也很难（不是不可能，是很难）根据此公钥推导出对应的私钥。</p>
+<p> <strong>第2步</strong><br> 当浏览器访问该网站，Web 服务器首先把包含公钥的证书发送给浏览器。</p>
+<p> <strong>第3步</strong><br> 浏览器验证网站发过来的证书。如果发现其中有诈，浏览器会提示“CA 证书安全警告”。<br> 由于有了这一步，就大大降低了（注意：是“大大降低”，而不是“彻底消除”）前面提到的“中间人攻击”的风险。</p>
+<p> 为啥浏览器能发现 CA 证书是否有诈？<br> 因为正经的 CA 证书，都是来自某个权威的 CA。如果某个 CA 足够权威，那么主流的操作系统（或浏览器）会内置该 CA 的“根证书”。<br> （比如 Windows 中就内置了几十个权威 CA 的根证书）<br> 因此，浏览器就可以利用系统内置的根证书，来判断网站发过来的 CA 证书是不是某个 CA 颁发的。<br> （关于“根证书”和“证书信任链”的概念，请参见之前的教程《<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2010/02/introduce-digital-certificate-and-ca.html">数字证书及CA的扫盲介绍</a>》）</p>
+<p> <strong>第4步</strong><br> 如果网站发过来的 CA 证书没有问题，那么浏览器就从该 CA 证书中提取出“公钥”。<br> 然后浏览器随机生成一个“对称加密的密钥”（以下称为 k）。用 CA 证书的公钥加密 k，得到密文 k’<br> 浏览器把 k’ 发送给网站。</p>
+<p> <strong>第5步</strong><br> 网站收到浏览器发过来的 k’，用服务器上的私钥进行解密，得到 k。<br> 至此，浏览器和网站都拥有 k，“密钥交换”大功告成啦。</p>
+</blockquote>
+<p>　　可能有同学会问：那么“方案3”是否就足够严密，无懈可击了捏？<br> 　俺只能说，“方案3”【从理论上讲】没有明显的漏洞。实际上 SSL 的早期版本（SSLv2）使用 RSA 进行身份认知和密钥交换，其原理与这个“方案3”类似。<br> 　但是，“理论”一旦落实到“实践”，往往是有差距滴，会引出新的问题。套用某 IT 大牛的名言，就是：In theory, there is no difference between theory and practice. But in practice, there is.<br> 　所以在本系列的后续博文，俺还会再来介绍“针对 SSL&#x2F;TLS 的种种攻击方式”以及“对应的防范措施”。</p>
+<h2 id="★关于【客户端证书】的补充说明"><a href="#★关于【客户端证书】的补充说明" class="headerlink" title="★关于【客户端证书】的补充说明"></a>★关于【客户端证书】的补充说明</h2><p>　　前面介绍的“方案3”仅仅使用了“服务端证书”——通过服务端证书来确保服务器不是假冒的。<br> 　除了“服务端证书”，在某些场合中还会涉及到“客户端证书”。所谓的“客户端证书”就是用来证明客户端（浏览器端）访问者的身份。<br> 　比如在某些金融公司的内网，你的电脑上必须部署“客户端证书”，才能打开重要服务器的页面。<br> 　由于本文主要介绍的是【公网】上的场景，这种场景下大都【不需要】“客户端证书”。所以，对“客户端证书”这个话题，俺就偷个懒，略过不提。</p>
+<h2 id="★总结"><a href="#★总结" class="headerlink" title="★总结"></a>★总结</h2><p>　　在本文结尾，来稍微总结一下：<br> 　如果没有引入某种身份认证机制，必定会导致“中间人攻击”。这种情况下，加密算法搞得再强大，也是然并卵。<br> 　本文介绍了两种身份认证的思路，分别是：<br> 1、基于私密的共享信息；<br> 2、基于双方都信任的公证人。<br> 　前者【不】适合用于互联网通讯，所以必须采用后者。也就是如今广泛使用的 CA 证书体系。CA 就是上述所说的“双方都信任的公证人”。</p>
+<h1 id="扫盲-HTTPS-和-SSL-TLS-协议-3-：密钥交换（密钥协商）算法及其原理"><a href="#扫盲-HTTPS-和-SSL-TLS-协议-3-：密钥交换（密钥协商）算法及其原理" class="headerlink" title="扫盲 HTTPS 和 SSL&#x2F;TLS 协议[3]：密钥交换（密钥协商）算法及其原理"></a>扫盲 HTTPS 和 SSL&#x2F;TLS 协议[3]：密钥交换（密钥协商）算法及其原理</h1><p>　先插播一个好消息：<br> 　本月初俺发了一篇《<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2016/09/About-WoSign.html">老流氓 CNNIC 的接班人——聊聊“沃通&#x2F;WoSign”的那些破事儿</a>》。前2天看到新闻说，Mozilla 组织（Firefox）已经把沃通的根证书加入黑名单了，为期一年。一年之后看它的表现再决定是否永久性屏蔽。<br> 　对这种流氓公司，就应该给它点颜色看看（老实说，俺还觉得处罚偏轻了）</p>
+<hr>
+<p>　　本系列的<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-2.html">前一篇</a>，咱们聊了“密钥交换的难点”以及“证书体系”的必要性。今天这篇来介绍一下实战中使用的“密钥协商算法”。</p>
+<h2 id="★密钥交换-协商机制要达到啥【目的】？"><a href="#★密钥交换-协商机制要达到啥【目的】？" class="headerlink" title="★密钥交换&#x2F;协商机制要达到啥【目的】？"></a>★密钥交换&#x2F;协商机制要达到啥【目的】？</h2><p><a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-2.html">前一篇</a>介绍了 SSL&#x2F;TLS 的身份认证机制。这个机制是为了防止攻击者通过【篡改】网络传输数据，来假冒身份，以达到“中间人攻击&#x2F;MITM”的目的。<br> 　而今天要聊的“密钥协商机制”是：（在身份认证的前提下）如何规避【偷窥】的风险。<br> 　通俗地说，即使有攻击者在偷窥你与服务器的网络传输，客户端（client）依然可以利用【密钥协商机制】与服务器端（server）商量出一个用来加密的密钥（也称“会话密钥”）。</p>
+<h2 id="★密钥交换-协商机制的几种【类型】"><a href="#★密钥交换-协商机制的几种【类型】" class="headerlink" title="★密钥交换&#x2F;协商机制的几种【类型】"></a>★密钥交换&#x2F;协商机制的几种【类型】</h2><p>　　俺总结了一下，大致有如下几种类型：</p>
+<h3 id="◇类型1——依靠【非】对称加密算法"><a href="#◇类型1——依靠【非】对称加密算法" class="headerlink" title="◇类型1——依靠【非】对称加密算法"></a>◇类型1——依靠【非】对称加密算法</h3><p>　　原理：<br> 　拿到公钥的一方先生成随机的会话密钥，然后利用公钥加密它；再把加密结果发给对方，对方用私钥解密；于是双方都得到了会话密钥。</p>
+<p> 　举例：<br><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/RSA_(cryptosystem)">RSA</a></p>
+<h3 id="◇类型2——依靠专门的密钥交换算法"><a href="#◇类型2——依靠专门的密钥交换算法" class="headerlink" title="◇类型2——依靠专门的密钥交换算法"></a>◇类型2——依靠专门的密钥交换算法</h3><p>　　原理：<br> 　这个原理比较复杂，一两句话说不清楚，待会儿聊到 DH 的那个章节会详谈。</p>
+<p> 　举例：<br><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange">DH 算法</a>及其变种</p>
+<h3 id="◇类型3——依靠通讯双方事先已经共享的“秘密”"><a href="#◇类型3——依靠通讯双方事先已经共享的“秘密”" class="headerlink" title="◇类型3——依靠通讯双方事先已经共享的“秘密”"></a>◇类型3——依靠通讯双方事先已经共享的“秘密”</h3><p>　　原理：<br> 　既然双方已经有共享的秘密（这个“秘密”可能已经是一个密钥，也可能只是某个密码&#x2F;password），只需要根据某种生成算法，就可以让双方产生相同的密钥（并且密钥长度可以任意指定）</p>
+<p> 　举例：<br><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Pre-shared_key">PSK</a> 和 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol">SRP</a>（可能很多同学没听过这俩玩意儿。别担心，本文后续部分有介绍）</p>
+<h2 id="★基于【RSA】的密钥协商"><a href="#★基于【RSA】的密钥协商" class="headerlink" title="★基于【RSA】的密钥协商"></a>★基于【RSA】的密钥协商</h2><h3 id="◇概述"><a href="#◇概述" class="headerlink" title="◇概述"></a>◇概述</h3><p>　　这大概是 SSL 最古老的密钥协商方式——早期的 SSLv2 只支持一种密钥协商机制，就是它！<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-2.html">（前一篇）介绍身份认证重要性</a>的时候，也是拿 RSA 来演示。<br> 　（再次唠叨）<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/RSA_(cryptosystem)">RSA</a> 是一种【非】对称加密算法。在本系列<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-1.html">第1篇</a>的背景知识介绍中，已经聊过这种算法的特点——加密和解密用使用【不同的】密钥。并且“非对称加密算法”既可以用来做“加密&#x2F;解密”，还可以用来做“数字签名”。</p>
+<h3 id="◇密钥协商的步骤"><a href="#◇密钥协商的步骤" class="headerlink" title="◇密钥协商的步骤"></a>◇密钥协商的步骤</h3><p>　　（下列步骤只阐述原理。具体的协议细节，等到本系列的后续几篇再讲）</p>
+<ol>
+<li>客户端连上服务端</li>
+<li>服务端发送 CA 证书给客户端</li>
+<li>客户端验证该证书的可靠性</li>
+<li>客户端从 CA 证书中取出公钥</li>
+<li>客户端生成一个随机密钥 k，并用这个公钥加密得到 k’</li>
+<li>客户端把 k’ 发送给服务端</li>
+<li>服务端收到 k’ 后用自己的私钥解密得到 k</li>
+<li>此时双方都得到了密钥 k，协商完成。</li>
+</ol>
+<h3 id="◇如何防范偷窥（嗅探）"><a href="#◇如何防范偷窥（嗅探）" class="headerlink" title="◇如何防范偷窥（嗅探）"></a>◇如何防范偷窥（嗅探）</h3><p>　　攻击方式1<br> 　攻击者虽然可以监视网络流量并拿到公钥，但是【无法】通过公钥推算出私钥（这点由 RSA 算法保证）</p>
+<p> 　攻击方式2<br> 　攻击者虽然可以监视网络流量并拿到 k’，但是攻击者没有私钥，【无法解密】 k’，因此也就无法得到 k</p>
+<h3 id="◇如何防范篡改（假冒身份）"><a href="#◇如何防范篡改（假冒身份）" class="headerlink" title="◇如何防范篡改（假冒身份）"></a>◇如何防范篡改（假冒身份）</h3><p>　　攻击方式1<br> 　如果攻击者在第2步篡改数据，伪造了证书，那么客户端在第3步会发现（这点由证书体系保证）</p>
+<p> 　攻击方式2<br> 　如果攻击者在第6步篡改数据，伪造了k’，那么服务端收到假的k’之后，解密会失败（这点由 RSA 算法保证）。服务端就知道被攻击了。</p>
+<h2 id="★基于【DH】的密钥协商"><a href="#★基于【DH】的密钥协商" class="headerlink" title="★基于【DH】的密钥协商"></a>★基于【DH】的密钥协商</h2><h3 id="◇概述-1"><a href="#◇概述-1" class="headerlink" title="◇概述"></a>◇概述</h3><p>　　DH 算法又称“Diffie–Hellman  算法”。这是两位数学牛人的名称，他们创立了这个算法。该算法用来实现【安全的】“密钥交换”。它可以做到——“通讯双方在完全没有对方任何预先信息的条件下通过不安全信道创建一个双方共享的私有密钥”。这句话比较绕口，通俗地说，可以归结为两个优点：</p>
+<ol>
+<li>通讯双方事先【不】需要有共享的秘密。</li>
+<li>用该算法协商密码，即使协商过程中被别人全程偷窥（比如“网络嗅探”），偷窥者也【无法】知道协商得出的密钥是啥。</li>
+</ol>
+<p> 　但是 DH 算法本身也有缺点——它【不】支持认证。也就是说：它虽然可以对抗“偷窥”，却无法对抗“篡改”，自然也就无法对抗“中间人攻击&#x2F;MITM”（在本系列的<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-2.html">前一篇</a>，俺已经强调过了——缺乏身份认证，【必定会】遭到“中间人攻击&#x2F;MITM”）。<br> 　为了避免遭遇 MITM 攻击，DH 需要与其它签名算法（比如 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/RSA_(cryptosystem)">RSA</a>、<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Digital_Signature_Algorithm">DSA</a>、<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Elliptic_Curve_DSA">ECDSA</a>）配合——靠签名算法帮忙来进行身份认证。当 DH 与 RSA 配合使用，称之为“DH-RSA”，与 DSA 配合则称为“DH-DSA”，以此类推<br> 　反之，如果 DH 【没有】配合某种签名算法，则称为“DH-ANON”（ANON 是洋文“匿名”的简写）。此时会遭遇“中间人攻击&#x2F;MITM”。（具体的中间人攻击手法，可以参见本系列<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-2.html">前一篇</a>）</p>
+<p> 　关于该算法的更多介绍，可以参见维基百科（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange">这个条目</a>）。</p>
+<h3 id="◇数学原理"><a href="#◇数学原理" class="headerlink" title="◇数学原理"></a>◇数学原理</h3><p>　　（如果你属于那种“看了数学公式就犯晕的人”，可以直接略过本小节，不影响你看后续的章节）</p>
+<p> 　从概念上讲：DH 依赖的是：求解“离散对数问题”的复杂性。具体的算法如下：<br> 　通讯双方（张三、李四）需要先约定好算法参数（algorithm parameters）：一个素数 p 作为模数，一个素数 g 作为基数（g 也称为“生成元”）。这两个算法参数是可以对外公开滴。<br> 　对于张三而言，需要先想好一个秘密的自然数 a 作为私钥（不能公开），然后计算 <code>A = ga mod p</code> 作为自己的公钥（可以公开）。<br> 　对李四而言也类似，先想好一个秘密的自然数 b 作为私钥（不能公开），然后计算 <code>B = gb mod p</code> 作为自己的公钥（可以公开）。<br> 　张三和李四互相交换各自的公钥。<br> 　然后张三计算出 <code>k = Ba mod p</code>，李四计算出 <code>k = Ab mod p</code></p>
+<p> 　该算法至少确保了如下几点：</p>
+<ol>
+<li>张三和李四分别计算出来的 k 必定是一致的</li>
+<li>张三和李四都无法根据已知的数来推算出对方的私钥（张三无法推算出 b，李四无法推算出 a）</li>
+<li>对于一个旁观者（偷窥者），虽然能看到 p，g，A，B，但是无法推算出 a 和 b（就是说，旁观者无法推算出双方的私钥），自然也无法推算出 k</li>
+</ol>
+<p><strong>举例</strong><br> 　前面说得都是符号，比较抽象。下面拿具体数字举例：<br> 假设约定的算法参数：模数是 <code>97</code>，基数是 <code>3</code><br> 张三用的私钥是 <code>6</code>，李四用的私钥是 <code>21</code>，用 python 代码演示如下（注：python 语言用“两个连续星号”表示“幂运算”，用百分号表示“取模运算”）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">p = 97</span><br><span class="line">g = 3</span><br><span class="line"></span><br><span class="line">a = 6</span><br><span class="line">b = 21</span><br><span class="line"></span><br><span class="line">A = (g**a) % p</span><br><span class="line">B = (g**b) % p</span><br><span class="line"></span><br><span class="line">print((B**a) % p)  # 此处输出 47</span><br><span class="line">print((A**b) % p)  # 此处输出 47</span><br></pre></td></tr></table></figure>
+
+<p>　　最后打印出来的两个 <code>47</code> 就是双方都计算出了【相同的】结果（这个数值可以用作之后的“会话密钥”）</p>
+<p> 　上面因为是举例，用的数字都比较小。在实战中需要注意如下几点，以降低被攻击的风险。</p>
+<ol>
+<li><code>p</code> 必须是质数且足够大（【至少】300位）</li>
+<li><code>a</code> 与 <code>b</code> 也要足够大（【至少】100位），且必须是随机生成。</li>
+<li><code>g</code> 必须是质数，【不】需要很大，比如 2 或 3 或 5 都可以。<code>g</code> 如果太大并【不能】显著提升安全性，反而白白浪费了性能。</li>
+</ol>
+<h3 id="◇密钥协商的步骤-1"><a href="#◇密钥协商的步骤-1" class="headerlink" title="◇密钥协商的步骤"></a>◇密钥协商的步骤</h3><p>　　（下列步骤只阐述原理。具体的协议细节，等到本系列的后续几篇再讲）</p>
+<ol>
+<li>客户端先连上服务端</li>
+<li>服务端生成一个随机数 s 作为自己的私钥，然后根据算法参数计算出公钥 S（算法参数通常是固定的）</li>
+<li>服务端使用某种签名算法把【算法参数（模数 p，基数 g）和服务端公钥 S】作为一个整体进行签名</li>
+<li>服务端把【算法参数（模数 p，基数 g）、服务端公钥S、签名】发送给客户端</li>
+<li>客户端收到后验证签名是否有效</li>
+<li>客户端生成一个随机数 c 作为自己的私钥，然后根据算法参数计算出公钥 C</li>
+<li>客户端把 C 发送给服务端</li>
+<li>客户端和服务端（根据上述 DH 算法）各自计算出 k 作为会话密钥</li>
+</ol>
+<h3 id="◇如何防范偷窥（嗅探）-1"><a href="#◇如何防范偷窥（嗅探）-1" class="headerlink" title="◇如何防范偷窥（嗅探）"></a>◇如何防范偷窥（嗅探）</h3><p>　　嗅探者可以通过监视网络传输，得到算法参数（模数 p，基数 g）以及双方的公钥，但是【无法】推算出双方的私钥，也【无法】推算出会话密钥（这是由 DH 算法在数学上保证的）</p>
+<h3 id="◇如何防范篡改（假冒身份）-1"><a href="#◇如何防范篡改（假冒身份）-1" class="headerlink" title="◇如何防范篡改（假冒身份）"></a>◇如何防范篡改（假冒身份）</h3><p>　　攻击方式1<br> 　攻击者可以第4步篡改数据（修改算法参数或服务端公钥）。但因为这些信息已经进行过数字签名。篡改之后会被客户端发现。</p>
+<p> 　攻击方式2<br> 　攻击者可以在第7步篡改客户端公钥。这步没有签名，服务端收到数据后不会发现被篡改。但是，攻击者篡改之后会导致“服务端与客户端生成的会话密钥【不一致】”。在后续的通讯步骤中会发现这点，并导致通讯终止。<br> 　（本系列的后续几篇讲具体协议的时候会提到：协议初始化&#x2F;握手阶段的末尾，双方都会向对方发送一段“验证性的密文”，这段密文用各自的会话密钥进行【对称】加密，如果双方的会话密钥不一致，这一步就会失败，进而导致握手失败，连接终止）</p>
+<h2 id="★DH-的变种——基于【椭圆曲线】的-ECDH"><a href="#★DH-的变种——基于【椭圆曲线】的-ECDH" class="headerlink" title="★DH 的变种——基于【椭圆曲线】的 ECDH"></a>★DH 的变种——基于【椭圆曲线】的 ECDH</h2><p>　　DH 算法有一个变种，称之为 ECDH（全称是“Elliptic Curve Diffie-Hellman”）。维基条目在“<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Elliptic_Curve_Diffie-Hellman">这里</a>”<br> 　它与 DH 类似，差别在于：<br> DH 依赖的是——求解“离散对数问题”的困难。<br> ECDH 依赖的是——求解“椭圆曲线离散对数问题”的困难。</p>
+<p> 　ECDH 的数学原理比 DH 更复杂。考虑到本文读者大都【不是】数学系出身，俺就不展开啦。<br> 　ECDH 跟 DH 一样，也是【不支持】认证滴——同样需要与其它签名算法（比如 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/RSA_(cryptosystem)">RSA</a>、<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Digital_Signature_Algorithm">DSA</a>、<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Elliptic_Curve_DSA">ECDSA</a>）配合。</p>
+<h2 id="★基于【PSK】的密钥协商"><a href="#★基于【PSK】的密钥协商" class="headerlink" title="★基于【PSK】的密钥协商"></a>★基于【PSK】的密钥协商</h2><h3 id="◇概述-2"><a href="#◇概述-2" class="headerlink" title="◇概述"></a>◇概述</h3><p>　　PSK 是洋文“Pre-Shared Key”的缩写。顾名思义，就是【预先】让通讯双方共享一些密钥（通常是【对称加密】的密钥）。所谓的【预先】，就是说，这些密钥在 TLS 连接尚未建立之前，就已经部署在通讯双方的系统内了。<br> 　这种算法用的不多，它的好处是：</p>
+<ol>
+<li>不需要依赖公钥体系，不需要部属 CA 证书。</li>
+<li>不需要涉及非对称加密，TLS 协议握手（初始化）时的性能好于前述的 RSA 和 DH。</li>
+</ol>
+<p> 　更多介绍可以参见维基百科，链接在“<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Pre-shared_key">这里</a>”。</p>
+<h3 id="◇密钥协商的步骤-2"><a href="#◇密钥协商的步骤-2" class="headerlink" title="◇密钥协商的步骤"></a>◇密钥协商的步骤</h3><p>（由于 PSK 用的不多，下面只简单介绍一下步骤，让大伙儿明白其原理）</p>
+<p> 　在通讯【之前】，通讯双方已经预先部署了若干个共享的密钥。<br> 　为了标识多个密钥，给每一个密钥定义一个唯一的 ID<br> 　协商的过程很简单：客户端把自己选好的密钥的 ID 告诉服务端。<br> 　如果服务端在自己的密钥池子中找到这个 ID，就用对应的密钥与客户端通讯；否则就报错并中断连接。</p>
+<h3 id="◇如何防范偷窥（嗅探）-2"><a href="#◇如何防范偷窥（嗅探）-2" class="headerlink" title="◇如何防范偷窥（嗅探）"></a>◇如何防范偷窥（嗅探）</h3><p>　　使用这种算法，在协商密钥的过程中交换的是密钥的标识（ID）而【不是】密钥本身。<br> 　就算攻击者监视了全过程，也无法知晓密钥啥。</p>
+<h3 id="◇如何防范篡改（假冒身份）-2"><a href="#◇如何防范篡改（假冒身份）-2" class="headerlink" title="◇如何防范篡改（假冒身份）"></a>◇如何防范篡改（假冒身份）</h3><p>　　PSK 可以单独使用，也可以搭配签名算法一起使用。<br> 　对于单独使用<br> 　如果攻击者篡改了协商过程中传送的密钥 ID，要么服务端发现 ID 无效（协商失败），要么服务端得到的 ID 与客户端不一致，在后续的通讯步骤中也会发现，并导致通讯终止。<br> 　（本系列的后续几篇讲具体协议的时候，会提到：协议初始化&#x2F;握手阶段的末尾，双方都会向对方发送一段“验证性的密文”，这段密文用各自的会话密钥进行【对称】加密，如果双方的会话密钥不一致，这一步就会失败，进而导致握手失败，连接终止）</p>
+<p> 　对于搭配签名算法<br> 　如果攻击者篡改了协商过程中传送的密钥 ID，验证签名会失败</p>
+<h3 id="◇补充说明"><a href="#◇补充说明" class="headerlink" title="◇补充说明"></a>◇补充说明</h3><p>　　PSK 与 RSA 具有某种相似性——既可以用来搞“密钥协商”，也可以用来搞“身份认证”。<br> 　所以，PSK 可以跟 DH（及其变种）进行组合。例如：DHE-PSK、ECDHE-PSK<br> 　关于 PSK 的更多细节，可以参见 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc4279">RFC4279</a></p>
+<h2 id="★基于【SRP】的密钥协商"><a href="#★基于【SRP】的密钥协商" class="headerlink" title="★基于【SRP】的密钥协商"></a>★基于【SRP】的密钥协商</h2><h3 id="◇概述-3"><a href="#◇概述-3" class="headerlink" title="◇概述"></a>◇概述</h3><p>　　SRP 是洋文“Secure Remote Password”的缩写。这个算法有点类似于刚才提到的 PSK——只不过  client&#x2F;server  双方共享的是比较人性化的密码（password）而不是密钥（key）。该算法采用了一些机制（盐&#x2F;salt、随机数）来防范“嗅探&#x2F;sniffer”或“字典猜解攻击”或“重放攻击”。<br> 　这个算法应该用得很少——OpenSSL 直到2012年才开始支持该算法。所以俺这里就不展开了。有兴趣的同学可以去看 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc2945">RFC2945</a> 的协议描述。</p>
+<h3 id="◇密钥协商的步骤-3"><a href="#◇密钥协商的步骤-3" class="headerlink" title="◇密钥协商的步骤"></a>◇密钥协商的步骤</h3><p>　　（由于 SRP 用的不多，俺偷懒一下，略去此小节）</p>
+<h2 id="★扫盲一下【前向保密】（PFS）"><a href="#★扫盲一下【前向保密】（PFS）" class="headerlink" title="★扫盲一下【前向保密】（PFS）"></a>★扫盲一下【前向保密】（PFS）</h2><h3 id="◇【回溯性破解】及其危险性"><a href="#◇【回溯性破解】及其危险性" class="headerlink" title="◇【回溯性破解】及其危险性"></a>◇【回溯性破解】及其危险性</h3><p>　　从技术上讲，攻击者如果能够对通讯双方进行【嗅探】，也就能够把通讯双方的传输数据存储下来。如果攻击者比较牛逼，以至于能拿到通讯双方的私钥，那就【有可能】根据私钥推导出会话密钥，从而解密之前存储的历史数据。<br> 　有些同学可能会问：攻击者如何拿到私钥捏？<br> 　【常见】的情况有如下几种：<br> 场景1——入侵双方的操作系统（搞定了操作系统，自然就能搞定系统中存储的私钥）；<br> 场景2——利用协议【设计】的漏洞（能达到这种水准的，通常是 NSA 之类的国家队，养了足够多的密码学大牛）<br> 场景3——利用协议【实现】的安全漏洞（比如前几年惊艳全球的“<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/04/openssl-heartbleed.html">心脏滴血漏洞</a>”，【有可能】会导致私钥泄漏。协议本身没问题，是 OpenSSL 的【代码实现】出了 bug）<br> 场景4——通过<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2009/05/social-engineering-0-overview.html">社会工程学</a>（比如政府部门可以直接要求本国的网站交出私钥）。</p>
+<h3 id="◇容易遭受回溯破解的密钥协商算法"><a href="#◇容易遭受回溯破解的密钥协商算法" class="headerlink" title="◇容易遭受回溯破解的密钥协商算法"></a>◇容易遭受回溯破解的密钥协商算法</h3><p>　　本文前面提到了几种密钥交换&#x2F;协商算法，如下这几种【特别容易】遭到“回溯破解”。</p>
+<p><strong>RSA</strong><br> 　攻击者事先存储了通讯的密文（历史数据）。<br> 　由于 RSA 的私钥是稳定的（长期不变）。假设有一天，攻击者拿到了 RSA 的私钥，就可以用这个私钥解密握手过程的密文，从而得到会话密钥（session key），然后用会话密钥解密会话的密文，得到会话的明文。</p>
+<p><strong>PSK（Pre-Shared Key）</strong><br> 　攻击者事先存储了通讯的密文（历史数据）。<br> 　由于双方共享的 key 是稳定的（长期不变）。如果有一天，攻击者拿到了通讯双方共享的 key，就可以用这个 key 解密握手过程的密文，从而得到会话密钥（session key），然后用会话密钥解密会话的密文，得到会话的明文。</p>
+<p><strong>SRP（Secure Remote Password）</strong><br> 　攻击者事先存储了通讯的密文（历史数据）。<br> 　由于双方共享的 password ＆ salt 是稳定的（长期不变）。如果有一天，攻击者拿到了通讯双方共享的 password 和  salt，就可以用来解密握手过程的密文，从而得到会话密钥（session key），然后用会话密钥解密会话的密文，得到会话的明文。</p>
+<h3 id="◇解决方法——“前向保密-完美正向加密”"><a href="#◇解决方法——“前向保密-完美正向加密”" class="headerlink" title="◇解决方法——“前向保密&#x2F;完美正向加密”"></a>◇解决方法——“前向保密&#x2F;完美正向加密”</h3><p>　　相比前面这几种密钥协商算法，DH 和 ECDH 是比较能抗“回溯破解”滴。为啥这么说捏？下面解释：<br> 　对于 DH 算法，通讯双方握手需要生成各自的私钥（前面提到的整数 a 和 b），然后根据 DH 算法计算得出会话密钥。换句话说，会话密钥依赖于双方的私钥 a 与 b。DH 算法的优势在于——双方的私钥（a ＆ b）是可以【动态生成】滴！<br> 　为了对抗“回溯性破解”，可以强制要求双方每次都生成【随机的】私钥。而且每次生成的两个私钥用完就丢弃（销毁）。如此一来，攻击者就难以破解过往的历史数据。DH 算法经过如此改良之后叫做 DHE（追加的字母 E 表示【ephemeral】）。<br> 　与 DH 类似，ECDH 也可以做类似的改良，变成 ECDHE，以对抗“回溯破解”。</p>
+<p> 　能够对抗“回溯破解”的密钥交换算法，被称为“前向保密”，洋文叫“forward secrecy”，缩写为  FS。它还有另一个称呼——“完美正向加密”（洋文是“perfect forward secrecy”，缩写为  PFS）。关于这方面的更多介绍，可以参见维基百科（链接在“<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Forward_secrecy">这里</a>”）。</p>
+<h2 id="★各种算法组合的【一览表】"><a href="#★各种算法组合的【一览表】" class="headerlink" title="★各种算法组合的【一览表】"></a>★各种算法组合的【一览表】</h2><table>
+<thead>
+<tr>
+<th>算法组合</th>
+<th>密钥交换</th>
+<th>身份认证</th>
+<th>是否会遭遇  中间人攻击</th>
+<th>是否具备  前向保密</th>
+<th>SSL 2.0</th>
+<th>SSL 3.0</th>
+<th>TLS 1.0</th>
+<th>TLS 1.1</th>
+<th>TLS 1.2</th>
+<th>TLS 1.3</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RSA</td>
+<td>RSA</td>
+<td>RSA</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>DH-RSA</td>
+<td>DH</td>
+<td>RSA</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>DH-DSA</td>
+<td>DH</td>
+<td>DSA</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>DHE-RSA</td>
+<td>DHE</td>
+<td>RSA</td>
+<td>否</td>
+<td>是</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+</tr>
+<tr>
+<td>DHE-DSA</td>
+<td>DHE</td>
+<td>DSA</td>
+<td>否</td>
+<td>是</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>ECDH-RSA</td>
+<td>ECDH</td>
+<td>RSA</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>ECDH-ECDSA</td>
+<td>ECDH</td>
+<td>ECDSA</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>ECDHE-RSA</td>
+<td>DHE</td>
+<td>RSA</td>
+<td>否</td>
+<td>是</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+</tr>
+<tr>
+<td>ECDHE-ECDSA</td>
+<td>DHE</td>
+<td>ECDSA</td>
+<td>否</td>
+<td>是</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+</tr>
+<tr>
+<td>PSK</td>
+<td>PSK</td>
+<td>PSK</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>？</td>
+</tr>
+<tr>
+<td>PSK-RSA</td>
+<td>PSK</td>
+<td>RSA</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>？</td>
+</tr>
+<tr>
+<td>DHE-PSK</td>
+<td>DHE</td>
+<td>PSK</td>
+<td>否</td>
+<td>是</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>？</td>
+</tr>
+<tr>
+<td>ECDHE-PSK</td>
+<td>DHE</td>
+<td>PSK</td>
+<td>否</td>
+<td>是</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>？</td>
+</tr>
+<tr>
+<td>SRP</td>
+<td>SRP</td>
+<td>SRP</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>？</td>
+</tr>
+<tr>
+<td>SRP-RSA</td>
+<td>SRP</td>
+<td>RSA</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>？</td>
+</tr>
+<tr>
+<td>SRP-DSA</td>
+<td>SRP</td>
+<td>DSA</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>DH-ANON</td>
+<td>DH</td>
+<td>无</td>
+<td>是</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>ECDH-ANON</td>
+<td>ECDH</td>
+<td>无</td>
+<td>是</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+</tbody></table>
+<p>　　（注：2018年8月，TLS 1.3 正式发布。俺又对本文略作补充）</p>
+<h1 id="扫盲-HTTPS-和-SSL-TLS-协议-4-：历史版本的演变及-Record-协议的细节"><a href="#扫盲-HTTPS-和-SSL-TLS-协议-4-：历史版本的演变及-Record-协议的细节" class="headerlink" title="扫盲 HTTPS 和 SSL&#x2F;TLS 协议[4]：历史版本的演变及 Record 协议的细节"></a>扫盲 HTTPS 和 SSL&#x2F;TLS 协议[4]：历史版本的演变及 Record 协议的细节</h1><p>俺一直在等 TLS 1.3 定稿（之所以这么期待，因为 1.3 是一次【大】升级）。<br> 　前些天（2018年8月），IETF 终于发布了 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc8446">RFC 8446</a>，标志着 TLS 1.3 协议大功告成。于是俺就来继续完成本系列的后面几篇。<br> 　本系列的<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2016/09/https-ssl-tls-3.html">前一篇</a>，咱们聊了“密钥交换&#x2F;密钥协商”的相关算法。从这篇开始，会逐步谈及协议的细节，今天就从 Record 协议说起。由于恰逢 TLS 1.3 新鲜出炉，俺也顺便聊聊 SSL&#x2F;TLS 历史上几个版本的演变及差异。</p>
+<h2 id="★名词解释"><a href="#★名词解释" class="headerlink" title="★名词解释"></a>★名词解释</h2><p>　　对于本文会涉及到的几个专业术语，先放上相应的解释。</p>
+<h3 id="◇块加密算法"><a href="#◇块加密算法" class="headerlink" title="◇块加密算法"></a>◇块加密算法</h3><p>　　“块加密算法”又称“分组加密算法”，洋文叫做“Block Cipher”，相关的维基百科链接在“<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Block_cipher">这里</a>”。<br> 　顾名思义，就是这类加密算法要求：被加密的明文数据必须分成【相同大小】的若干坨（每一坨的大小称为【块长度】）。<br> 　以目前流行的对称加密算法 AES 为例。AES 的【块长度】是“128 比特”（16字节）。也就是说，AES 要求被加密的明文必须是【128位】的整数倍。<br> 　由于【块加密算法】对明文的长度有要求，所以用这类算法对明文数据进行加密之前，要先进行【补齐】——在明文数据末尾追加一些垃圾数据，使之达到【块长度】的整数倍。</p>
+<h3 id="◇流加密算法"><a href="#◇流加密算法" class="headerlink" title="◇流加密算法"></a>◇流加密算法</h3><p>　　与“块加密算法”相对应的是“流加密算法”，洋文叫做“Stream Cipher”，相关的维基百科页面在“<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Stream_cipher">这里</a>”。<br> 　与“块加密算法”最大的差别在于——流加密算法对明文数据的长度【没有】要求（可以是任意字节数）。<br> 　典型的流加密算法是 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/RC4">RC4</a>（顺便提一句：RC4 里面的 R 也就是 RSA 的那个 R）</p>
+<h3 id="◇MAC（消息认证码）"><a href="#◇MAC（消息认证码）" class="headerlink" title="◇MAC（消息认证码）"></a>◇MAC（消息认证码）</h3><p>　　MAC 是洋文“Message Authentication Code”的缩写，维基百科的介绍在“<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Message_authentication_code">这里</a>”。这玩意儿是通讯及密码学的常见的概念——用 MAC 算法来确保某个信息在传输的过程中【没有】被篡改。<br> 　说到这儿，某些聪明的同学已经联想到【散列函数】——用散列函数计算出来的哈希值确实可以用来作为 MAC。这种基于哈希（HASH）的“消息验证代码”也称作“HMAC”。不了解哈希算法的同学可以看这篇博文：《<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2013/02/file-integrity-check.html">扫盲文件完整性校验——关于散列值和数字签名</a>》</p>
+<h3 id="◇MAC-的几种搞法"><a href="#◇MAC-的几种搞法" class="headerlink" title="◇MAC 的几种搞法"></a>◇MAC 的几种搞法</h3><p>　　常见的有如下3种。俺从维基百科剽窃了对应的流程图，大伙儿看图就明白其原理，省得俺浪费力气打字了。</p>
+<p><strong>Encrypt-then-MAC（EtM）</strong></p>
+<p><img src="https://lh3.googleusercontent.com/ZQkpnuTEiUkPvn2psD0gPxtUbENwZP1onhRNDCb2F7JAovU6bGFTBwu20aop2R4WFlwWx0Hd-B0meLWd8xKHhRFzisfxSO0Epf8oeNK8w0Q6pwcLgTLVqDZrVlLa01V46i6ZaGHus50" alt="不见图 请翻墙"><br> （先加密明文得到密文，再根据密文计算 MAC，最后把密文与 MAC 合并成一坨）</p>
+<p><strong>Encrypt-and-MAC（E＆M）</strong></p>
+<p><img src="https://lh6.googleusercontent.com/BKYtLQ_do3AKtTYeI-Atao5MztF_PLPvjdsv4TVPneDWJGZZ6RVFq7QqaTMF-ulgEnupLr8IJCB989gnXGEomqSxPqupKky6xOrWwqs3Vhk7qeqQHGkoiCDI8cxGwmkZT9HCFTgMsp0" alt="不见图 请翻墙"><br> （对明文加密得到密文，对明文计算 MAC，最后把密文与 MAC 合并成一坨）</p>
+<p><strong>MAC-then-Encrypt（MtE）</strong></p>
+<p><img src="https://lh6.googleusercontent.com/SUX0koVBgoYe2zey_lL1ptgiFtyTgHHXfrKi2AwSl3cELjk9ObToDlPUODdugOOsPKFbK-jzBFPmwT2fZlEpJIMOj44TS2p8EHOVWVoeWtZ3F_cQrkU4lOobrIb4o3dhdWlNHseog74" alt="不见图 请翻墙"><br> （对明文计算 MAC，把明文与 MAC 合并成一坨，然后一起加密）</p>
+<h3 id="◇AE（带认证的加密）"><a href="#◇AE（带认证的加密）" class="headerlink" title="◇AE（带认证的加密）"></a>◇AE（带认证的加密）</h3><p>　　传统的加密算法只负责实现【保密性】，而不负责【完整性】。这么说有点抽象，俺举个例子：<br> 　假设你把一段明文 P 加密为一段密文 C，通过网络把 C 发送给另一个人。中途如果被攻击者篡改了（把 C 修改为 C’），那么接收方收到 C’ 之后，还是可以正常进行解密操作（当然，解密之后得到的就不再是 P 了，而是得到一段无意义的数据）<br> 　为了解决上述弊端，业界引入 AE（Authenticated Encryption）算法的概念。也就是说，AE 算法不但能做到【保密性】还可以做到【完整性】。<br> 　刚才扫盲的三种 MAC 实现方式，【从理论上讲】就可以算 AE 啦。但上述那三种 MAC 的实现方式有个弊端——【解密】的一方还要自己进行  MAC 的验证操作。这种搞法既麻烦又增加额外风险。比如说：写解密代码的程序猿&#x2F;程序媛万一太粗心忘记进行验证，岂不前功尽弃？</p>
+<h3 id="◇【真正的】AE"><a href="#◇【真正的】AE" class="headerlink" title="◇【真正的】AE"></a>◇【真正的】AE</h3><p>　　为了避免上述提到的弊端，密码学界那帮专家又捣鼓出一些新的算法（比如 CCM、GCM）。这些算法可以在解密的同时验证数据的有效性，而且这些算法也【不】需要再额外存储一个独立的 MAC 数据。<br> 　本文后续部分提及的 AE，如果没有特别说明，就是指这类【真正的】AE。<br> 　知名的那些 AE 算法，可以组合现有的加密算法。比如说：从 TLS 1.2 开始引入的 GCM 和 CCM，这两个 AE 算法都可以组合 AES128 与 AES256 加密算法。<br> 　组合现有加密算法的好处不光是避免重新发明轮子，而且还可以充分利用硬件加速。比如 AES 作为对称加密的标准算法，某些芯片（比如 Intel&#x2F;AMD）会把 AES 算法直接做成 CPU 指令，以实现硬件加速。</p>
+<h3 id="◇AEAD"><a href="#◇AEAD" class="headerlink" title="◇AEAD"></a>◇AEAD</h3><p>　　AEAD 是洋文“Authenticated Encryption with Associated Data”的缩写，普通话叫做“带关联数据的认证加密”。简而言之，AEAD 是 AE 的变种。为了方便理解，俺再来找个栗子：<br> 　比如说在网络通讯中，数据包的【头部】必须是明文且保证完整性；而数据包的【载荷】既要加密（保密性）又要保证完整性。这时候 AEAD 算法就派上用场啦——数据包的【头部】就是 AEAD 算法里面的【关联数据】。</p>
+<h3 id="◇前向保密-完美正向加密（forward-secrecy）"><a href="#◇前向保密-完美正向加密（forward-secrecy）" class="headerlink" title="◇前向保密 &#x2F; 完美正向加密（forward secrecy）"></a>◇前向保密 &#x2F; 完美正向加密（forward secrecy）</h3><p>　　在本系列的前一篇《<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2016/09/https-ssl-tls-3.html">密钥交换（密钥协商）算法及其原理</a>》，俺已经补充了一个章节，简单扫盲了一下“回溯性破解”与“前向保密”的概念。<br> 　所以这里就不再浪费口水啦。</p>
+<h2 id="★SSL-TLS-历史版本的演变及差异"><a href="#★SSL-TLS-历史版本的演变及差异" class="headerlink" title="★SSL&#x2F;TLS 历史版本的演变及差异"></a>★SSL&#x2F;TLS 历史版本的演变及差异</h2><p>　　趁着 TLS 1.3 正式发布的大好时机，简单扫盲一下 SSL&#x2F;TLS 各个版本的差异。</p>
+<h3 id="◇SSL-1-0"><a href="#◇SSL-1-0" class="headerlink" title="◇SSL 1.0"></a>◇SSL 1.0</h3><p>　　在本系列的<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-1.html">第一篇</a>，俺曾经提到：SSL 是上世纪90年代中期，由<a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E7%B6%B2%E6%99%AF">网景公司</a>设计的。早期设计者是网景公司的 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Taher_Elgamal">Taher Elgamal</a>（一位埃及的密码学家）。此人也被誉为“SSL 它爹”。<br> 　SSL 1.0 【从没】正式发布过，所以业界对它了解不多。之所以没有正式发布，据说是设计完之后发现了若干严重的安全缺陷，就不好意思再拿出来丢人现眼。</p>
+<h3 id="◇SSL-2-0"><a href="#◇SSL-2-0" class="headerlink" title="◇SSL 2.0"></a>◇SSL 2.0</h3><p>　　SSL 2.0 是 1995 年正式发布滴，坦率地说，协议设计比较粗糙。<br> 　比如俺在前一篇介绍过“密钥交换算法”和“身份认证算法”。在这两方面，SSL 2.0 都仅仅支持 RSA 这一种算法。<br> 　另一个值得吐槽之处是：SSL 2.0【没有】考虑到“前向保密”（洋文是“<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Forward_secrecy">forward secrecy</a>”），因此会遭遇【回溯性破解】的风险。（关于“前向保密”与“回溯性破解”，请看本文开头的名词解释）</p>
+<h3 id="◇SSL-3-0"><a href="#◇SSL-3-0" class="headerlink" title="◇SSL 3.0"></a>◇SSL 3.0</h3><p>　　SSL 2.0 发布之后不久，又被发现若干安全漏洞。所以又赶紧在 1996 年发布了 SSL 3.0 版本。（接连两个版本都不太灵光，看来“SSL 它爹”的水平实在令人不敢恭维）<br> 　这个 3.0 版本可以说是另起炉灶——换了几个密码学专家，【重新设计】了 SSL 协议。所以 SSL 3.0 相比 SSL 2.0 有很大差别。<br> 　关于 SSL 3.0 的权威技术规范，可以参见 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc6101">RFC 6101</a></p>
+<p> 　请允许俺稍微跑题一下：<br> 　重新设计 SSL 3.0 的那些专家，为首的是来自斯坦福大学的 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Paul_Kocher">Paul Kocher</a>——此人堪称密码学奇才，SSL 3.0 发布的那年（1996），他才23岁（回想俺23岁的时候，在密码学方面是只菜鸟，真是情何以堪）。<br> 　在同一年，他还发表了篇论文，描述了一种【全新的】密码学攻击方式——<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Timing_attack">timing attack</a>（基于时间因素的边信道攻击）。这种攻击手法的原理，说起来并不算复杂，但很有创意，之前从来没人想到过。</p>
+<h3 id="◇TLS-1-0"><a href="#◇TLS-1-0" class="headerlink" title="◇TLS 1.0"></a>◇TLS 1.0</h3><p>　　TLS 1.0 是 1999 年发布滴，技术规范参见 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc2246">RFC 2246</a>。<br> 　为啥从 SSL 改名为 TLS 捏？主要是安全性在 Web 世界中越来越重要，因此 <a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E5%B7%A5%E7%A8%8B%E4%BB%BB%E5%8A%A1%E7%BB%84">IETF</a> 组织急需把 SSL 的协议【标准化】，为了以示区别，另外起个名字叫 TLS（洋文“Transport Layer Security”的缩写）。<br> 　虽然协议名改了，但其实 TLS 1.0 与 SSL 3.0 的差别不大。这点从协议版本号也可以看出来——TLS 1.0 内部的协议版本号其实是【3.1】。</p>
+<h3 id="◇TLS-1-1"><a href="#◇TLS-1-1" class="headerlink" title="◇TLS 1.1"></a>◇TLS 1.1</h3><p>　　TLS 1.1 是 2006 年发布滴，技术规范是 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc4346">RFC 4346</a>。<br> 　发布该版本的主要动机是：修补 CBC（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation#Cipher-block_chaining_(CBC)">cipher-block chaining</a>）相关的漏洞，以防范某些攻击（比如“<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Padding_oracle_attack">padding oracle attack</a>”）。<br> 　在 1.1 版本，原有的“【隐式】初始化向量”改为“【显式】初始化向量”，修正了 CBC 方式下填充数据的缺陷。</p>
+<h3 id="◇TLS-1-2"><a href="#◇TLS-1-2" class="headerlink" title="◇TLS 1.2"></a>◇TLS 1.2</h3><p>　　TLS 1.2 是 2008 年发布滴，技术规范是 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc5246">RFC 5246</a>。<br> 　相比 TLS 1.1 的变化如下：</p>
+<blockquote>
+<p>支持 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/AEAD_block_cipher_modes_of_operation">AEAD</a> 加密模式（参见 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc5116">RFC 5116</a>）<br> 加密算法废弃了 DES、DES40、IDEA、RC2<br> HMAC 增加了 SHA256</p>
+</blockquote>
+<h3 id="◇TLS-1-3"><a href="#◇TLS-1-3" class="headerlink" title="◇TLS 1.3"></a>◇TLS 1.3</h3><p>　　俺写本文时，TLS 1.3 刚刚新鲜出炉没几天（2018年8月），其技术规范是 <a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc8446">RFC 8446</a>。<br> 　从2008到2018，真所谓“十年磨一剑”。目前看来，这个 1.3 版本是一次雄心勃勃的升级，相对 TLS 1.2 加了不少东西，也删了不少东西。考虑到篇幅，俺挑几个主要的来说说：</p>
+<blockquote>
+<p>首先要表扬的是：TLS 1.3 完善了 SNI（<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Server_Name_Indication">Server Name Identification</a>）扩展，非常有利于翻墙工具借助【依附的自由】对抗网络封锁；<br> 其次是强制使用“完美正向加密（PFS）”，所以很多做不到 PFS 的密钥协商算法在 TLS 1.3 规范中被无情地抛弃了（比如：RSA、静态 DH、静态 ECDH…）；<br> 传统的 HMAC 也被无情地抛弃了，今后只使用 AEAD 方式来保障完整性（关于 AEAD，请看本文开头的名词解释）；<br> 原有的对称加密算法只保留 AES（3DES、RC4 废弃），另增加 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/ChaCha20">CHACHA20</a> 流加密算法；<br> 压缩特性被废除（以消除 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/CRIME">CRIME 攻击</a>的风险）；<br> 初始握手的过程有【很大】的改变（这个等下一篇再聊）<br> ……</p>
+</blockquote>
+<h2 id="★Record-协议概述"><a href="#★Record-协议概述" class="headerlink" title="★Record 协议概述"></a>★Record 协议概述</h2><p>　　很多介绍 SSL&#x2F;TLS 的文章都把 record 协议给忽略了。可能这些文章的作者觉得 record 协议不太重要。但俺本着“高度负责任”的心态，觉得还是有必要跟大伙儿聊一下。<br> 　SSL&#x2F;TLS 协议在通讯的过程中会把需要传输的数据分成一坨一坨的，每次都只发送或接收一坨。在洋文中，每一坨称作一个 record。下面要聊的“Record 协议”，就是用来定义这个 record 的格式。</p>
+<h2 id="★Record-协议的结构"><a href="#★Record-协议的结构" class="headerlink" title="★Record 协议的结构"></a>★Record 协议的结构</h2><p>　　Record 协议比较简单，主要结构见下表：</p>
+<table>
+<thead>
+<tr>
+<th>字段名称</th>
+<th>字段长度</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>类型</td>
+<td>1字节</td>
+<td></td>
+</tr>
+<tr>
+<td>版本</td>
+<td>2字节</td>
+<td>TLS 1.3 废弃，仅留作向下兼容</td>
+</tr>
+<tr>
+<td>载荷长度</td>
+<td>2字节</td>
+<td></td>
+</tr>
+<tr>
+<td>消息</td>
+<td>0~N 字节</td>
+<td></td>
+</tr>
+<tr>
+<td>消息认证码</td>
+<td>0~N 字节</td>
+<td>TLS 1.3 不需要该字段</td>
+</tr>
+<tr>
+<td>填充</td>
+<td>0~N 字节</td>
+<td></td>
+</tr>
+</tbody></table>
+<h3 id="◇类型（type）"><a href="#◇类型（type）" class="headerlink" title="◇类型（type）"></a>◇类型（type）</h3><p>　　“类型”字段是个枚举值，协议允许的有效值参见下表（对表格中的每种类型，后续小节会有详细介绍）</p>
+<table>
+<thead>
+<tr>
+<th>十六进制</th>
+<th>十进制</th>
+<th>含义</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0x14</td>
+<td>20</td>
+<td>ChangeCipherSpec（切换到加密方式）</td>
+<td>TLS 1.3 废弃</td>
+</tr>
+<tr>
+<td>0x15</td>
+<td>21</td>
+<td>Alert（告警）</td>
+<td></td>
+</tr>
+<tr>
+<td>0x16</td>
+<td>22</td>
+<td>Handshake（握手）</td>
+<td></td>
+</tr>
+<tr>
+<td>0x17</td>
+<td>23</td>
+<td>Application（应用层数据）</td>
+<td></td>
+</tr>
+<tr>
+<td>0x18</td>
+<td>24</td>
+<td>Heartbeat（心跳）</td>
+<td>始于 TLS 1.3</td>
+</tr>
+</tbody></table>
+<h3 id="◇版本（version）"><a href="#◇版本（version）" class="headerlink" title="◇版本（version）"></a>◇版本（version）</h3><p>　　“版本”字段含两个字节，分别表示：主版本号 ＆ 次版本号。其有效值如下：</p>
+<table>
+<thead>
+<tr>
+<th>主版本号</th>
+<th>次版本号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0x2</td>
+<td>0x0</td>
+<td>SSL 2.0</td>
+</tr>
+<tr>
+<td>0x3</td>
+<td>0x0</td>
+<td>SSL 3.0</td>
+</tr>
+<tr>
+<td>0x3</td>
+<td>0x1</td>
+<td>TLS 1.0</td>
+</tr>
+<tr>
+<td>0x3</td>
+<td>0x2</td>
+<td>TLS 1.1</td>
+</tr>
+<tr>
+<td>0x3</td>
+<td>0x3</td>
+<td>TLS 1.2</td>
+</tr>
+</tbody></table>
+<p>（注：从 TLS 1.3 版本开始，“版本”字段已经被废弃，仅用于向后兼容）</p>
+<h3 id="◇长度（length）"><a href="#◇长度（length）" class="headerlink" title="◇长度（length）"></a>◇长度（length）</h3><p>　　“长度”字段含两个字节，表示载荷长度。<br> 　对于【明文】的 record，【没有】“消息认证码”字段，也【没有】“填充”字段——“载荷长度”也就是消息的长度。<br> 　对于【加密】的 record——“载荷长度”是“消息、消息验证码、填充”三者的长度之和。<br> 　SSL&#x2F;TLS 协议规定了长度字段最多只能表示 <code>0~16384</code> 字节（注：<code>214 = 16384</code>）。</p>
+<h3 id="◇消息（message）"><a href="#◇消息（message）" class="headerlink" title="◇消息（message）"></a>◇消息（message）</h3><p>　　每个 record 的“消息”字段的内容取决于“类型”字段。关于这个“消息”字段，待会儿再聊。</p>
+<h3 id="◇消息认证码（MAC）"><a href="#◇消息认证码（MAC）" class="headerlink" title="◇消息认证码（MAC）"></a>◇消息认证码（MAC）</h3><p>　　关于 MAC 这个概念，参见本文开头部分的名词解释，此处不再浪费口水。<br> 　在 SSL&#x2F;TLS 协议中，MAC 对于明文的 record 没有意义（为啥没意义，请自行思考）。<br> 　对于【加密】的 record，要分两种情况：<br> 其一，如果是【传统的】块加密与流加密，会带有额外的 MAC；<br> 其二，如果使用 AEAD 加密模式，其本身已经内置了【完整性】的校验，不需额外的 MAC。<br> 　前面提到，AEAD 是从 TLS 1.2 开始引入，到了 TLS 1.3 就【只支持】AEAD 啦。所以 TLS 1.3 【没有】MAC 部分。</p>
+<p> 　SSL&#x2F;TLS 各个版本实现【完整性】的方式，参见如下表格：</p>
+<table>
+<thead>
+<tr>
+<th>算法</th>
+<th>SSL 2.0</th>
+<th>SSL 3.0</th>
+<th>TLS 1.0</th>
+<th>TLS 1.1</th>
+<th>TLS 1.2</th>
+<th>TLS 1.3</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HMAC-MD5</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>HMAC-SHA1</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>HMAC-SHA256</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>AEAD</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>否</td>
+<td>是</td>
+<td>是</td>
+</tr>
+</tbody></table>
+<h3 id="◇填充（padding）"><a href="#◇填充（padding）" class="headerlink" title="◇填充（padding）"></a>◇填充（padding）</h3><p>　　只有当 record 是加密的，并且使用的加密算法属于【块加密算法】，才会使用“填充”字段。</p>
+<h2 id="★各种类型-Record-简介"><a href="#★各种类型-Record-简介" class="headerlink" title="★各种类型 Record 简介"></a>★各种类型 Record 简介</h2><p>　　从 Record 协议的头部类型字段可以看出，总共有5种类型的 Record。下面简单说一下：</p>
+<h3 id="◇握手（Handshake）"><a href="#◇握手（Handshake）" class="headerlink" title="◇握手（Handshake）"></a>◇握手（Handshake）</h3><p>　　Record 协议的“类型”字段为 <code>22</code>（<code>0x16</code>），表示这条 record 是 Handshake 类型。<br> 　“握手”的意思就是——通讯双方初次打交道，需要交换一些初始化的信息。<br> 　对于 SSL&#x2F;TLS 协议，为了建立起【可靠的】加密信道，通讯双方需要在握手的过程交换很多信息（加密算法、压缩算法、MAC 算法、等等）。所以这个握手的过程是比较复杂滴，需要耗费很多口水。俺留到本系列的下一篇，专门来聊“握手的细节”。<br> 　由于握手的过程，加密信道尚未建立，所以用来进行握手的 record 是【明文】滴，并且也【没有】“MAC”字段及“填充”字段。</p>
+<h3 id="◇切换到加密方式（ChangeCipherSpec）"><a href="#◇切换到加密方式（ChangeCipherSpec）" class="headerlink" title="◇切换到加密方式（ChangeCipherSpec）"></a>◇切换到加密方式（ChangeCipherSpec）</h3><p>　　Record 协议的“类型”字段为 <code>20</code>（<code>0x14</code>），表示这条 record 是 ChangeCipherSpec 类型。<br> 　这个 ChangeCipherSpec 也是跟握手过程相关滴，留到下一篇。<br> 　（注：从 TLS 1.3 版本开始，ChangeCipherSpec 类型的 record 已经被废弃，仅用于向后兼容）</p>
+<h3 id="◇应用层数据（Application）"><a href="#◇应用层数据（Application）" class="headerlink" title="◇应用层数据（Application）"></a>◇应用层数据（Application）</h3><p>　　Record 协议的“类型”字段为 <code>23</code>（<code>0x17</code>），表示这条 record 是 Application 类型。<br> 　也就是说，这条 record 的载荷部分存放的是上层（应用层）协议的数据。既然传输的是上层数据，肯定得是【加密】滴！但不一定有“MAC”字段。要看具体的 SSL&#x2F;TLS 版本（如下）：</p>
+<ol>
+<li>对于 TLS 1.1 及之前的版本，总是使用 HMAC 进行完整性校验，所以总是含有“MAC”字段。</li>
+<li>对于 TLS 1.2，如果握手之后采用 AEAD 加密模式，就没有 MAC；反之，则有 MAC。</li>
+<li>对于 TLS 1.3 及之后的版本，只支持 AEAD，【不】再有“MAC”字段。</li>
+</ol>
+<p> 　另外，在 TLS 1.2 及【之前】的版本中，还支持“对应用层数据进行压缩”。本来俺还想聊聊这方面的实现细节。但是 TLS 1.3 已经【废弃】了压缩选项（为了防 <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/CRIME">CRIME 攻击</a>），恐怕未来版本也不会再有压缩选项了。搞得俺也没积极性来聊这个话题了 :(</p>
+<h3 id="◇告警（Alert）"><a href="#◇告警（Alert）" class="headerlink" title="◇告警（Alert）"></a>◇告警（Alert）</h3><p>　　Record 协议的“类型”字段为 <code>21</code>（<code>0x15</code>），表示这条 record 是 Alert 类型。<br> 　这种类型的 record 用来发送警告或出错信息。<br> 　在通讯的过程（包括握手过程）中，有时候某一方会发现不对劲（比如收到的数据出现缺失或错误），这时候就要发送一条 Alert 类型的 record 给对方。<br> 　不对劲的情况分为两种，洋文分别称之为 Warning 和 Fatal。两者的差别在于：</p>
+<blockquote>
+<p>Warning 表示通讯出现【不稳定】的情况（这种“不稳定”通常是【可恢复】滴）<br> Fatal 表示通讯出现【不可靠】的情况（比如：证书失效、数据被篡改。这种“不可靠”通常是【不可恢复】滴）</p>
+</blockquote>
+<p>　　如果不对劲的情况属于 Warning，通讯可能会继续也可能会断开；如果不对劲的情况属于 Fatal，通讯会在发送 Alert 之后立即断开。<br> 　这种类型的 record，其“消息”字段仅有2字节，头一个字节表示告警的“级别&#x2F;Level”（1表示 warning，2表示 fatal）；后一个字节表示具体的描述（有一个对照表，用不同的整数表示不同的情况）。<br> 　如果在握手【之后】发送告警，此时双方已经建立起加密信道，则告警 record 的“消息”字段是【密文】的。<br> 　如果在握手【之前】发送告警，此书尚未建立加密信道，则告警 record 的“消息”字段是【明文】的。</p>
+<h3 id="◇心跳（Heartbeat）"><a href="#◇心跳（Heartbeat）" class="headerlink" title="◇心跳（Heartbeat）"></a>◇心跳（Heartbeat）</h3><p>　　Record 协议的“类型”字段为 <code>24</code>（<code>0x18</code>），表示这条 record 是 Heartbeat 类型。<br> 　这种类型的 record 用来发送心跳信息。<br> 　所谓的【心跳】，主要用来确认“通讯的对端”依然正常。在 SSL&#x2F;TLS 连接建立之后，有可能在某些情况下出现【通讯空闲】（上层的协议在某个时间段没有数据传输）。这时候就需要依靠【心跳机制】来判断对方是否还活着。<br> 　由于“心跳”的传输是在加密信道建立【之后】，所以“心跳”的 record 也是加密滴。<br> 　关于这个心跳机制的技术细节，请参见 RFC6520（链接在“<a target="_blank" rel="noopener" href="https://tools.ietf.org/html/rfc6520">这里</a>”）。<br> 　这个心跳协议的 RFC 发布于2012年（晚于2008年的 TLS 1.2），因此目前只有 TLS 1.3 版本才支持它。</p>
+<p>本文转自：<a target="_blank" rel="noopener" href="https://program-think.blogspot.com/2014/11/https-ssl-tls-0.html">https://program-think.blogspot.com/2014/11/https-ssl-tls-0.html</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://laushinelae.github.io">LiuXinLei</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://laushinelae.github.io/200%20HTTPS%20%E5%92%8C%20SSL&amp;TLS%20%E5%8D%8F%E8%AE%AE/">https://laushinelae.github.io/200%20HTTPS%20%E5%92%8C%20SSL&amp;TLS%20%E5%8D%8F%E8%AE%AE/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://laushinelae.github.io" target="_blank">lxl's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Linux/">Linux</a><a class="post-meta__tags" href="/tags/HTTP/">HTTP</a></div><div class="post_share"><div class="social-share" data-image="/img/avatar.gif" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/Pay_WeChat.jpg" target="_blank"><img class="post-qr-code-img" src="/img/Pay_WeChat.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="/img/Pay_AliPay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/Pay_AliPay.jpg" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/010%20CentOS%E4%B8%AD%E5%AE%89%E8%A3%85Docker%E6%95%99%E7%A8%8B/" title="CentOS中安装Docker教程"><div class="cover" style="background: var(--default-bg-color)"></div><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">CentOS中安装Docker教程</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/010%20CentOS%E4%B8%AD%E5%AE%89%E8%A3%85Docker%E6%95%99%E7%A8%8B/" title="CentOS中安装Docker教程"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-04-03</div><div class="title">CentOS中安装Docker教程</div></div></a></div><div><a href="/000%20%E4%BB%8E0%E5%88%B01%E6%90%AD%E5%BB%BAPOC%E6%B5%8B%E8%AF%95%E6%9C%BA/" title="从0到1搭建POC测试机"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-04-01</div><div class="title">从0到1搭建POC测试机</div></div></a></div><div><a href="/101%20Docker%E6%90%AD%E5%BB%BA%E5%9B%BD%E5%AF%86ssl/" title="Docker搭建国密ssl"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-04-03</div><div class="title">Docker搭建国密ssl</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.gif" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">LiuXinLei</div><div class="author-info__description">LiuXinLei's Blog</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">16</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/laushinelae"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">This is lxl's Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%89%AB%E7%9B%B2-HTTPS-%E5%92%8C-SSL-TLS-%E5%8D%8F%E8%AE%AE-1-%EF%BC%9A%E8%83%8C%E6%99%AF%E7%9F%A5%E8%AF%86%E3%80%81%E5%8D%8F%E8%AE%AE%E7%9A%84%E9%9C%80%E6%B1%82%E3%80%81%E8%AE%BE%E8%AE%A1%E7%9A%84%E9%9A%BE%E7%82%B9"><span class="toc-number">1.</span> <span class="toc-text">扫盲 HTTPS 和 SSL&#x2F;TLS 协议[1]：背景知识、协议的需求、设计的难点</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E7%9B%B8%E5%85%B3%E8%83%8C%E6%99%AF%E7%9F%A5%E8%AF%86"><span class="toc-number">1.1.</span> <span class="toc-text">★相关背景知识</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%85%88%E6%BE%84%E6%B8%85%E5%87%A0%E4%B8%AA%E6%9C%AF%E8%AF%AD%E2%80%94%E2%80%94HTTPS%E3%80%81SSL%E3%80%81TLS"><span class="toc-number">1.1.1.</span> <span class="toc-text">◇先澄清几个术语——HTTPS、SSL、TLS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%86%8D%E6%9D%A5%E8%AF%B4%E8%AF%B4-HTTP-%E5%8D%8F%E8%AE%AE%E7%9A%84%E7%89%B9%E7%82%B9"><span class="toc-number">1.1.2.</span> <span class="toc-text">◇再来说说 HTTP 协议的特点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E8%B0%88%E8%B0%88%E2%80%9C%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E2%80%9D%E5%92%8C%E2%80%9C%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E2%80%9D%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="toc-number">1.1.3.</span> <span class="toc-text">◇谈谈“对称加密”和“非对称加密”的概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87CA-%E8%AF%81%E4%B9%A6%E7%9A%84%E5%8E%9F%E7%90%86%E5%8F%8A%E7%94%A8%E9%80%94"><span class="toc-number">1.1.4.</span> <span class="toc-text">◇CA 证书的原理及用途</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85HTTPS-%E5%8D%8F%E8%AE%AE%E7%9A%84%E3%80%90%E9%9C%80%E6%B1%82%E3%80%91%E6%98%AF%E5%95%A5%EF%BC%9F"><span class="toc-number">1.2.</span> <span class="toc-text">★HTTPS 协议的【需求】是啥？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%85%BC%E5%AE%B9%E6%80%A7"><span class="toc-number">1.2.1.</span> <span class="toc-text">◇兼容性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7"><span class="toc-number">1.2.2.</span> <span class="toc-text">◇可扩展性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E4%BF%9D%E5%AF%86%E6%80%A7%EF%BC%88%E9%98%B2%E6%B3%84%E5%AF%86%EF%BC%89"><span class="toc-number">1.2.3.</span> <span class="toc-text">◇保密性（防泄密）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%AE%8C%E6%95%B4%E6%80%A7%EF%BC%88%E9%98%B2%E7%AF%A1%E6%94%B9%EF%BC%89"><span class="toc-number">1.2.4.</span> <span class="toc-text">◇完整性（防篡改）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E7%9C%9F%E5%AE%9E%E6%80%A7%EF%BC%88%E9%98%B2%E5%81%87%E5%86%92%EF%BC%89"><span class="toc-number">1.2.5.</span> <span class="toc-text">◇真实性（防假冒）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E6%80%A7%E8%83%BD"><span class="toc-number">1.2.6.</span> <span class="toc-text">◇性能</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%B0%8F%E7%BB%93"><span class="toc-number">1.2.7.</span> <span class="toc-text">◇小结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E8%AE%BE%E8%AE%A1-HTTPS-%E5%8D%8F%E8%AE%AE%E7%9A%84%E4%B8%BB%E8%A6%81%E3%80%90%E9%9A%BE%E7%82%B9%E3%80%91%E6%98%AF%E5%95%A5%EF%BC%9F"><span class="toc-number">1.3.</span> <span class="toc-text">★设计 HTTPS 协议的主要【难点】是啥？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E7%BB%93%E5%B0%BE"><span class="toc-number">1.4.</span> <span class="toc-text">★结尾</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%89%AB%E7%9B%B2-HTTPS-%E5%92%8C-SSL-TLS-%E5%8D%8F%E8%AE%AE-2-%EF%BC%9A%E5%8F%AF%E9%9D%A0%E5%AF%86%E9%92%A5%E4%BA%A4%E6%8D%A2%E7%9A%84%E9%9A%BE%E7%82%B9%EF%BC%8C%E4%BB%A5%E5%8F%8A%E8%BA%AB%E4%BB%BD%E8%AE%A4%E8%AF%81%E7%9A%84%E5%BF%85%E8%A6%81%E6%80%A7"><span class="toc-number">2.</span> <span class="toc-text">[扫盲 HTTPS 和 SSL&#x2F;TLS 协议[2]：可靠密钥交换的难点，以及身份认证的必要性]</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E5%85%88%E6%8F%92%E6%92%AD%E4%B8%80%E4%B8%AA%E5%AE%89%E5%85%A8%E9%80%9A%E5%91%8A"><span class="toc-number">2.1.</span> <span class="toc-text">★先插播一个安全通告</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E6%96%B9%E6%A1%881%E2%80%94%E2%80%94%E5%8D%95%E7%BA%AF%E7%94%A8%E2%80%9C%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E2%80%9D%E7%9A%84%E5%8F%AF%E8%A1%8C%E6%80%A7"><span class="toc-number">2.2.</span> <span class="toc-text">★方案1——单纯用“对称加密算法”的可行性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E6%96%B9%E6%A1%882%E2%80%94%E2%80%94%E5%8D%95%E7%BA%AF%E7%94%A8%E2%80%9C%E9%9D%9E%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E2%80%9D%E7%9A%84%E9%A3%8E%E9%99%A9"><span class="toc-number">2.3.</span> <span class="toc-text">★方案2——单纯用“非对称加密算法”的风险</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E6%96%B9%E6%A1%882%E5%A4%B1%E8%B4%A5%E7%9A%84%E6%A0%B9%E6%BA%90%E2%80%94%E2%80%94%E7%BC%BA%E4%B9%8F%E3%80%90%E5%8F%AF%E9%9D%A0%E7%9A%84%E3%80%91%E8%BA%AB%E4%BB%BD%E8%AE%A4%E8%AF%81"><span class="toc-number">2.4.</span> <span class="toc-text">★方案2失败的根源——缺乏【可靠的】身份认证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E3%80%90%E8%BA%AB%E4%BB%BD%E8%AE%A4%E8%AF%81%E3%80%91%E7%9A%84%E5%87%A0%E7%A7%8D%E6%96%B9%E5%BC%8F"><span class="toc-number">2.5.</span> <span class="toc-text">★【身份认证】的几种方式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%9F%BA%E4%BA%8E%E6%9F%90%E4%BA%9B%E2%80%9C%E7%A7%81%E5%AF%86%E7%9A%84%E5%85%B1%E4%BA%AB%E4%BF%A1%E6%81%AF%E2%80%9D"><span class="toc-number">2.5.1.</span> <span class="toc-text">◇基于某些“私密的共享信息”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%9F%BA%E4%BA%8E%E5%8F%8C%E6%96%B9%E9%83%BD%E4%BF%A1%E4%BB%BB%E7%9A%84%E2%80%9C%E5%85%AC%E8%AF%81%E4%BA%BA%E2%80%9D"><span class="toc-number">2.5.2.</span> <span class="toc-text">◇基于双方都信任的“公证人”</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E5%A6%82%E4%BD%95%E8%A7%A3%E5%86%B3-SSL-%E7%9A%84%E3%80%90%E8%BA%AB%E4%BB%BD%E8%AE%A4%E8%AF%81%E3%80%91%E9%97%AE%E9%A2%98%E2%80%94%E2%80%94CA-%E7%9A%84%E5%BC%95%E5%85%A5"><span class="toc-number">2.6.</span> <span class="toc-text">★如何解决 SSL 的【身份认证】问题——CA 的引入</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E6%96%B9%E6%A1%883%E2%80%94%E2%80%94%E5%9F%BA%E4%BA%8E-CA-%E8%AF%81%E4%B9%A6%E8%BF%9B%E8%A1%8C%E5%AF%86%E9%92%A5%E4%BA%A4%E6%8D%A2"><span class="toc-number">2.7.</span> <span class="toc-text">★方案3——基于 CA 证书进行密钥交换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E5%85%B3%E4%BA%8E%E3%80%90%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%AF%81%E4%B9%A6%E3%80%91%E7%9A%84%E8%A1%A5%E5%85%85%E8%AF%B4%E6%98%8E"><span class="toc-number">2.8.</span> <span class="toc-text">★关于【客户端证书】的补充说明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E6%80%BB%E7%BB%93"><span class="toc-number">2.9.</span> <span class="toc-text">★总结</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%89%AB%E7%9B%B2-HTTPS-%E5%92%8C-SSL-TLS-%E5%8D%8F%E8%AE%AE-3-%EF%BC%9A%E5%AF%86%E9%92%A5%E4%BA%A4%E6%8D%A2%EF%BC%88%E5%AF%86%E9%92%A5%E5%8D%8F%E5%95%86%EF%BC%89%E7%AE%97%E6%B3%95%E5%8F%8A%E5%85%B6%E5%8E%9F%E7%90%86"><span class="toc-number">3.</span> <span class="toc-text">扫盲 HTTPS 和 SSL&#x2F;TLS 协议[3]：密钥交换（密钥协商）算法及其原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E5%AF%86%E9%92%A5%E4%BA%A4%E6%8D%A2-%E5%8D%8F%E5%95%86%E6%9C%BA%E5%88%B6%E8%A6%81%E8%BE%BE%E5%88%B0%E5%95%A5%E3%80%90%E7%9B%AE%E7%9A%84%E3%80%91%EF%BC%9F"><span class="toc-number">3.1.</span> <span class="toc-text">★密钥交换&#x2F;协商机制要达到啥【目的】？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E5%AF%86%E9%92%A5%E4%BA%A4%E6%8D%A2-%E5%8D%8F%E5%95%86%E6%9C%BA%E5%88%B6%E7%9A%84%E5%87%A0%E7%A7%8D%E3%80%90%E7%B1%BB%E5%9E%8B%E3%80%91"><span class="toc-number">3.2.</span> <span class="toc-text">★密钥交换&#x2F;协商机制的几种【类型】</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E7%B1%BB%E5%9E%8B1%E2%80%94%E2%80%94%E4%BE%9D%E9%9D%A0%E3%80%90%E9%9D%9E%E3%80%91%E5%AF%B9%E7%A7%B0%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95"><span class="toc-number">3.2.1.</span> <span class="toc-text">◇类型1——依靠【非】对称加密算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E7%B1%BB%E5%9E%8B2%E2%80%94%E2%80%94%E4%BE%9D%E9%9D%A0%E4%B8%93%E9%97%A8%E7%9A%84%E5%AF%86%E9%92%A5%E4%BA%A4%E6%8D%A2%E7%AE%97%E6%B3%95"><span class="toc-number">3.2.2.</span> <span class="toc-text">◇类型2——依靠专门的密钥交换算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E7%B1%BB%E5%9E%8B3%E2%80%94%E2%80%94%E4%BE%9D%E9%9D%A0%E9%80%9A%E8%AE%AF%E5%8F%8C%E6%96%B9%E4%BA%8B%E5%85%88%E5%B7%B2%E7%BB%8F%E5%85%B1%E4%BA%AB%E7%9A%84%E2%80%9C%E7%A7%98%E5%AF%86%E2%80%9D"><span class="toc-number">3.2.3.</span> <span class="toc-text">◇类型3——依靠通讯双方事先已经共享的“秘密”</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E5%9F%BA%E4%BA%8E%E3%80%90RSA%E3%80%91%E7%9A%84%E5%AF%86%E9%92%A5%E5%8D%8F%E5%95%86"><span class="toc-number">3.3.</span> <span class="toc-text">★基于【RSA】的密钥协商</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E6%A6%82%E8%BF%B0"><span class="toc-number">3.3.1.</span> <span class="toc-text">◇概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%AF%86%E9%92%A5%E5%8D%8F%E5%95%86%E7%9A%84%E6%AD%A5%E9%AA%A4"><span class="toc-number">3.3.2.</span> <span class="toc-text">◇密钥协商的步骤</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%A6%82%E4%BD%95%E9%98%B2%E8%8C%83%E5%81%B7%E7%AA%A5%EF%BC%88%E5%97%85%E6%8E%A2%EF%BC%89"><span class="toc-number">3.3.3.</span> <span class="toc-text">◇如何防范偷窥（嗅探）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%A6%82%E4%BD%95%E9%98%B2%E8%8C%83%E7%AF%A1%E6%94%B9%EF%BC%88%E5%81%87%E5%86%92%E8%BA%AB%E4%BB%BD%EF%BC%89"><span class="toc-number">3.3.4.</span> <span class="toc-text">◇如何防范篡改（假冒身份）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E5%9F%BA%E4%BA%8E%E3%80%90DH%E3%80%91%E7%9A%84%E5%AF%86%E9%92%A5%E5%8D%8F%E5%95%86"><span class="toc-number">3.4.</span> <span class="toc-text">★基于【DH】的密钥协商</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E6%A6%82%E8%BF%B0-1"><span class="toc-number">3.4.1.</span> <span class="toc-text">◇概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E6%95%B0%E5%AD%A6%E5%8E%9F%E7%90%86"><span class="toc-number">3.4.2.</span> <span class="toc-text">◇数学原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%AF%86%E9%92%A5%E5%8D%8F%E5%95%86%E7%9A%84%E6%AD%A5%E9%AA%A4-1"><span class="toc-number">3.4.3.</span> <span class="toc-text">◇密钥协商的步骤</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%A6%82%E4%BD%95%E9%98%B2%E8%8C%83%E5%81%B7%E7%AA%A5%EF%BC%88%E5%97%85%E6%8E%A2%EF%BC%89-1"><span class="toc-number">3.4.4.</span> <span class="toc-text">◇如何防范偷窥（嗅探）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%A6%82%E4%BD%95%E9%98%B2%E8%8C%83%E7%AF%A1%E6%94%B9%EF%BC%88%E5%81%87%E5%86%92%E8%BA%AB%E4%BB%BD%EF%BC%89-1"><span class="toc-number">3.4.5.</span> <span class="toc-text">◇如何防范篡改（假冒身份）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85DH-%E7%9A%84%E5%8F%98%E7%A7%8D%E2%80%94%E2%80%94%E5%9F%BA%E4%BA%8E%E3%80%90%E6%A4%AD%E5%9C%86%E6%9B%B2%E7%BA%BF%E3%80%91%E7%9A%84-ECDH"><span class="toc-number">3.5.</span> <span class="toc-text">★DH 的变种——基于【椭圆曲线】的 ECDH</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E5%9F%BA%E4%BA%8E%E3%80%90PSK%E3%80%91%E7%9A%84%E5%AF%86%E9%92%A5%E5%8D%8F%E5%95%86"><span class="toc-number">3.6.</span> <span class="toc-text">★基于【PSK】的密钥协商</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E6%A6%82%E8%BF%B0-2"><span class="toc-number">3.6.1.</span> <span class="toc-text">◇概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%AF%86%E9%92%A5%E5%8D%8F%E5%95%86%E7%9A%84%E6%AD%A5%E9%AA%A4-2"><span class="toc-number">3.6.2.</span> <span class="toc-text">◇密钥协商的步骤</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%A6%82%E4%BD%95%E9%98%B2%E8%8C%83%E5%81%B7%E7%AA%A5%EF%BC%88%E5%97%85%E6%8E%A2%EF%BC%89-2"><span class="toc-number">3.6.3.</span> <span class="toc-text">◇如何防范偷窥（嗅探）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%A6%82%E4%BD%95%E9%98%B2%E8%8C%83%E7%AF%A1%E6%94%B9%EF%BC%88%E5%81%87%E5%86%92%E8%BA%AB%E4%BB%BD%EF%BC%89-2"><span class="toc-number">3.6.4.</span> <span class="toc-text">◇如何防范篡改（假冒身份）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E8%A1%A5%E5%85%85%E8%AF%B4%E6%98%8E"><span class="toc-number">3.6.5.</span> <span class="toc-text">◇补充说明</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E5%9F%BA%E4%BA%8E%E3%80%90SRP%E3%80%91%E7%9A%84%E5%AF%86%E9%92%A5%E5%8D%8F%E5%95%86"><span class="toc-number">3.7.</span> <span class="toc-text">★基于【SRP】的密钥协商</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E6%A6%82%E8%BF%B0-3"><span class="toc-number">3.7.1.</span> <span class="toc-text">◇概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%AF%86%E9%92%A5%E5%8D%8F%E5%95%86%E7%9A%84%E6%AD%A5%E9%AA%A4-3"><span class="toc-number">3.7.2.</span> <span class="toc-text">◇密钥协商的步骤</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E6%89%AB%E7%9B%B2%E4%B8%80%E4%B8%8B%E3%80%90%E5%89%8D%E5%90%91%E4%BF%9D%E5%AF%86%E3%80%91%EF%BC%88PFS%EF%BC%89"><span class="toc-number">3.8.</span> <span class="toc-text">★扫盲一下【前向保密】（PFS）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E3%80%90%E5%9B%9E%E6%BA%AF%E6%80%A7%E7%A0%B4%E8%A7%A3%E3%80%91%E5%8F%8A%E5%85%B6%E5%8D%B1%E9%99%A9%E6%80%A7"><span class="toc-number">3.8.1.</span> <span class="toc-text">◇【回溯性破解】及其危险性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%AE%B9%E6%98%93%E9%81%AD%E5%8F%97%E5%9B%9E%E6%BA%AF%E7%A0%B4%E8%A7%A3%E7%9A%84%E5%AF%86%E9%92%A5%E5%8D%8F%E5%95%86%E7%AE%97%E6%B3%95"><span class="toc-number">3.8.2.</span> <span class="toc-text">◇容易遭受回溯破解的密钥协商算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95%E2%80%94%E2%80%94%E2%80%9C%E5%89%8D%E5%90%91%E4%BF%9D%E5%AF%86-%E5%AE%8C%E7%BE%8E%E6%AD%A3%E5%90%91%E5%8A%A0%E5%AF%86%E2%80%9D"><span class="toc-number">3.8.3.</span> <span class="toc-text">◇解决方法——“前向保密&#x2F;完美正向加密”</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E5%90%84%E7%A7%8D%E7%AE%97%E6%B3%95%E7%BB%84%E5%90%88%E7%9A%84%E3%80%90%E4%B8%80%E8%A7%88%E8%A1%A8%E3%80%91"><span class="toc-number">3.9.</span> <span class="toc-text">★各种算法组合的【一览表】</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%89%AB%E7%9B%B2-HTTPS-%E5%92%8C-SSL-TLS-%E5%8D%8F%E8%AE%AE-4-%EF%BC%9A%E5%8E%86%E5%8F%B2%E7%89%88%E6%9C%AC%E7%9A%84%E6%BC%94%E5%8F%98%E5%8F%8A-Record-%E5%8D%8F%E8%AE%AE%E7%9A%84%E7%BB%86%E8%8A%82"><span class="toc-number">4.</span> <span class="toc-text">扫盲 HTTPS 和 SSL&#x2F;TLS 协议[4]：历史版本的演变及 Record 协议的细节</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E5%90%8D%E8%AF%8D%E8%A7%A3%E9%87%8A"><span class="toc-number">4.1.</span> <span class="toc-text">★名词解释</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%9D%97%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95"><span class="toc-number">4.1.1.</span> <span class="toc-text">◇块加密算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E6%B5%81%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95"><span class="toc-number">4.1.2.</span> <span class="toc-text">◇流加密算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87MAC%EF%BC%88%E6%B6%88%E6%81%AF%E8%AE%A4%E8%AF%81%E7%A0%81%EF%BC%89"><span class="toc-number">4.1.3.</span> <span class="toc-text">◇MAC（消息认证码）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87MAC-%E7%9A%84%E5%87%A0%E7%A7%8D%E6%90%9E%E6%B3%95"><span class="toc-number">4.1.4.</span> <span class="toc-text">◇MAC 的几种搞法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87AE%EF%BC%88%E5%B8%A6%E8%AE%A4%E8%AF%81%E7%9A%84%E5%8A%A0%E5%AF%86%EF%BC%89"><span class="toc-number">4.1.5.</span> <span class="toc-text">◇AE（带认证的加密）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E3%80%90%E7%9C%9F%E6%AD%A3%E7%9A%84%E3%80%91AE"><span class="toc-number">4.1.6.</span> <span class="toc-text">◇【真正的】AE</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87AEAD"><span class="toc-number">4.1.7.</span> <span class="toc-text">◇AEAD</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%89%8D%E5%90%91%E4%BF%9D%E5%AF%86-%E5%AE%8C%E7%BE%8E%E6%AD%A3%E5%90%91%E5%8A%A0%E5%AF%86%EF%BC%88forward-secrecy%EF%BC%89"><span class="toc-number">4.1.8.</span> <span class="toc-text">◇前向保密 &#x2F; 完美正向加密（forward secrecy）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85SSL-TLS-%E5%8E%86%E5%8F%B2%E7%89%88%E6%9C%AC%E7%9A%84%E6%BC%94%E5%8F%98%E5%8F%8A%E5%B7%AE%E5%BC%82"><span class="toc-number">4.2.</span> <span class="toc-text">★SSL&#x2F;TLS 历史版本的演变及差异</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87SSL-1-0"><span class="toc-number">4.2.1.</span> <span class="toc-text">◇SSL 1.0</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87SSL-2-0"><span class="toc-number">4.2.2.</span> <span class="toc-text">◇SSL 2.0</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87SSL-3-0"><span class="toc-number">4.2.3.</span> <span class="toc-text">◇SSL 3.0</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87TLS-1-0"><span class="toc-number">4.2.4.</span> <span class="toc-text">◇TLS 1.0</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87TLS-1-1"><span class="toc-number">4.2.5.</span> <span class="toc-text">◇TLS 1.1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87TLS-1-2"><span class="toc-number">4.2.6.</span> <span class="toc-text">◇TLS 1.2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87TLS-1-3"><span class="toc-number">4.2.7.</span> <span class="toc-text">◇TLS 1.3</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85Record-%E5%8D%8F%E8%AE%AE%E6%A6%82%E8%BF%B0"><span class="toc-number">4.3.</span> <span class="toc-text">★Record 协议概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85Record-%E5%8D%8F%E8%AE%AE%E7%9A%84%E7%BB%93%E6%9E%84"><span class="toc-number">4.4.</span> <span class="toc-text">★Record 协议的结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E7%B1%BB%E5%9E%8B%EF%BC%88type%EF%BC%89"><span class="toc-number">4.4.1.</span> <span class="toc-text">◇类型（type）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E7%89%88%E6%9C%AC%EF%BC%88version%EF%BC%89"><span class="toc-number">4.4.2.</span> <span class="toc-text">◇版本（version）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E9%95%BF%E5%BA%A6%EF%BC%88length%EF%BC%89"><span class="toc-number">4.4.3.</span> <span class="toc-text">◇长度（length）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E6%B6%88%E6%81%AF%EF%BC%88message%EF%BC%89"><span class="toc-number">4.4.4.</span> <span class="toc-text">◇消息（message）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E6%B6%88%E6%81%AF%E8%AE%A4%E8%AF%81%E7%A0%81%EF%BC%88MAC%EF%BC%89"><span class="toc-number">4.4.5.</span> <span class="toc-text">◇消息认证码（MAC）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%A1%AB%E5%85%85%EF%BC%88padding%EF%BC%89"><span class="toc-number">4.4.6.</span> <span class="toc-text">◇填充（padding）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%98%85%E5%90%84%E7%A7%8D%E7%B1%BB%E5%9E%8B-Record-%E7%AE%80%E4%BB%8B"><span class="toc-number">4.5.</span> <span class="toc-text">★各种类型 Record 简介</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E6%8F%A1%E6%89%8B%EF%BC%88Handshake%EF%BC%89"><span class="toc-number">4.5.1.</span> <span class="toc-text">◇握手（Handshake）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%88%87%E6%8D%A2%E5%88%B0%E5%8A%A0%E5%AF%86%E6%96%B9%E5%BC%8F%EF%BC%88ChangeCipherSpec%EF%BC%89"><span class="toc-number">4.5.2.</span> <span class="toc-text">◇切换到加密方式（ChangeCipherSpec）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%BA%94%E7%94%A8%E5%B1%82%E6%95%B0%E6%8D%AE%EF%BC%88Application%EF%BC%89"><span class="toc-number">4.5.3.</span> <span class="toc-text">◇应用层数据（Application）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%91%8A%E8%AD%A6%EF%BC%88Alert%EF%BC%89"><span class="toc-number">4.5.4.</span> <span class="toc-text">◇告警（Alert）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%97%87%E5%BF%83%E8%B7%B3%EF%BC%88Heartbeat%EF%BC%89"><span class="toc-number">4.5.5.</span> <span class="toc-text">◇心跳（Heartbeat）</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/200%20HTTPS%20%E5%92%8C%20SSL&amp;TLS%20%E5%8D%8F%E8%AE%AE/" title="HTTPS 和 SSL&amp;TLS 协议">HTTPS 和 SSL&amp;TLS 协议</a><time datetime="2024-04-10T11:13:12.000Z" title="发表于 2024-04-10 19:13:12">2024-04-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/010%20CentOS%E4%B8%AD%E5%AE%89%E8%A3%85Docker%E6%95%99%E7%A8%8B/" title="CentOS中安装Docker教程">CentOS中安装Docker教程</a><time datetime="2024-04-03T11:33:52.000Z" title="发表于 2024-04-03 19:33:52">2024-04-03</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/101%20Docker%E6%90%AD%E5%BB%BA%E5%9B%BD%E5%AF%86ssl/" title="Docker搭建国密ssl">Docker搭建国密ssl</a><time datetime="2024-04-03T11:33:52.000Z" title="发表于 2024-04-03 19:33:52">2024-04-03</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/020%20%E4%BD%BF%E7%94%A8%20Docker%E6%90%AD%E5%BB%BAConfluence%E6%8C%87%E5%8D%97/" title="使用Docker搭建Confluence指南">使用Docker搭建Confluence指南</a><time datetime="2024-04-01T05:33:52.000Z" title="发表于 2024-04-01 13:33:52">2024-04-01</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/000%20%E4%BB%8E0%E5%88%B01%E6%90%AD%E5%BB%BAPOC%E6%B5%8B%E8%AF%95%E6%9C%BA/" title="从0到1搭建POC测试机">从0到1搭建POC测试机</a><time datetime="2024-04-01T05:33:52.000Z" title="发表于 2024-04-01 13:33:52">2024-04-01</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 By LiuXinLei</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=4.13.0"></script><script src="/js/main.js?v=4.13.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.33/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const initGitalk = () => {
+    const gitalk = new Gitalk(Object.assign({
+      clientID: '4b7fe00324a98ae05e67',
+      clientSecret: '10e226abe2116b9f90957c2e39a5100b763dae07',
+      repo: 'laushinelae.github.io',
+      owner: 'laushinelae',
+      admin: ['laushinelae'],
+      id: 'b279cb579d7d927b65274fb1a77ed0db',
+      updateCountCallback: commentCount
+    },null))
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async() => {
+    if (typeof Gitalk === 'function') initGitalk()
+    else {
+      await getCSS('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.css')
+      await getScript('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.js')
+      initGitalk()
+    }
+  }
+  
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async src="/js/fps.js"></script><link rel="stylesheet" href="/css/fps.css"><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=4.13.0"></script></div></div><!-- hexo injector body_end start --><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><p id="ghbdages"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" data-title="博客框架为Hexo_v7.1.0" title=""><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" data-title="主题版本Butterfly_v4.13.0" title=""><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="https://github.com/" style="margin-inline:5px" data-title="本站项目由Github托管" title=""><img src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&amp;logo=GitHub" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" data-title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可" title=""><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></p>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><!-- hexo injector body_end end --></body></html>

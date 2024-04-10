@@ -1,0 +1,329 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Docker搭建国密ssl | lxl's Blog</title><meta name="author" content="LiuXinLei"><meta name="copyright" content="LiuXinLei"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="加密算法和认证方式算法对比： 按照目前的使用普遍度：RSA &gt; ECC &gt; SM2 SSL证书在提交申请的时候，就会需要选择加密算法，目前使用较多的依然是 RSA，或者 RSA 和 ECC 配合使用。在某些情况下会选择 SM2 算法。 RSA 算法：目前普遍使用，在各个老旧平台浏览器里面兼容度很好。 ECC 算法：是SSL证书新兴的算法趋势，一般只需要 256 位加密长度即可达到相当的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker搭建国密ssl">
+<meta property="og:url" content="https://laushinelae.github.io/101%20Docker%E6%90%AD%E5%BB%BA%E5%9B%BD%E5%AF%86ssl/index.html">
+<meta property="og:site_name" content="lxl&#39;s Blog">
+<meta property="og:description" content="加密算法和认证方式算法对比： 按照目前的使用普遍度：RSA &gt; ECC &gt; SM2 SSL证书在提交申请的时候，就会需要选择加密算法，目前使用较多的依然是 RSA，或者 RSA 和 ECC 配合使用。在某些情况下会选择 SM2 算法。 RSA 算法：目前普遍使用，在各个老旧平台浏览器里面兼容度很好。 ECC 算法：是SSL证书新兴的算法趋势，一般只需要 256 位加密长度即可达到相当的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://laushinelae.github.io/img/avatar.gif">
+<meta property="article:published_time" content="2024-04-03T11:33:52.000Z">
+<meta property="article:modified_time" content="2024-04-10T02:59:52.718Z">
+<meta property="article:author" content="LiuXinLei">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="CentOS">
+<meta property="article:tag" content="Docker&#x2F;Podman">
+<meta property="article:tag" content="教程">
+<meta property="article:tag" content="国密">
+<meta property="article:tag" content="RSA">
+<meta property="article:tag" content="gmssl">
+<meta property="article:tag" content="国密ssl">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://laushinelae.github.io/img/avatar.gif"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://laushinelae.github.io/101%20Docker%E6%90%AD%E5%BB%BA%E5%9B%BD%E5%AF%86ssl/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//hm.baidu.com"/><link rel="preconnect" href="//www.clarity.ms"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=4.13.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.33/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-1246116072676573',
+  enable_page_level_ads: 'true'
+});</script><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?4872e61fb4e7b0a92824b79c303ea4c5";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script><script>(function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "ls86ct5gqc");</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体中文","cht_to_chs":"你已切换为简体中文","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.11.1/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Docker搭建国密ssl',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-04-10 10:59:52'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+        if (t === 'dark') activateDarkMode()
+        else if (t === 'light') activateLightMode()
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><span id="fps">></span><!-- hexo injector head_end start --><link rel="stylesheet" href="/css/runtime.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.1.1"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="/img/avatar.gif" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">16</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a href="/" title="lxl's Blog"><span class="site-name">lxl's Blog</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page group" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> Link</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> About</span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Docker搭建国密ssl</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-04-03T11:33:52.000Z" title="发表于 2024-04-03 19:33:52">2024-04-03</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-04-10T02:59:52.718Z" title="更新于 2024-04-10 10:59:52">2024-04-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Docker-Podman/">Docker/Podman</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%95%99%E7%A8%8B/">教程</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">1.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>8分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Docker搭建国密ssl"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h1 id="加密算法和认证方式"><a href="#加密算法和认证方式" class="headerlink" title="加密算法和认证方式"></a>加密算法和认证方式</h1><p>算法对比：</p>
+<p>按照目前的使用普遍度：RSA &gt; ECC &gt; SM2</p>
+<p>SSL证书在提交申请的时候，就会需要选择加密算法，目前使用较多的依然是 RSA，或者 RSA 和 ECC 配合使用。在某些情况下会选择 SM2 算法。</p>
+<p>RSA 算法：目前普遍使用，在各个老旧平台浏览器里面兼容度很好。</p>
+<p>ECC 算法：是SSL证书新兴的算法趋势，一般只需要 256 位加密长度即可达到相当的安全性，比 RSA 加密效率更高，但占用资源却比 RSA 更少。但缺点是一些比较老旧的系统环境中无法支撑这种算法，所以它的兼容性相比 RSA 要差一些。</p>
+<p>SM2 算法：SM2 国密算法SSL证书也是刚刚兴起，目前仅仅少数几款浏览器支持，且对服务器环境要求较高，目前无法做到普遍部署。</p>
+<p>目前比较普遍的做法是用 RSA 的 SSL证书和 ECC 的证书同时部署，在客户端实现自适应切换，即当用户环境支持 ECC 的时候，网站自动适配 ECC 加密算法的证书，否则就适配 RSA 的SSL证书。</p>
+<table>
+<thead>
+<tr>
+<th>序号</th>
+<th>加密算法和认证方式</th>
+<th>端口</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>商密ECC单向认证</td>
+<td>55511</td>
+</tr>
+<tr>
+<td>2</td>
+<td>商密ECC双向认证</td>
+<td>55512</td>
+</tr>
+<tr>
+<td>3</td>
+<td>商密RSA单向认证</td>
+<td>55521</td>
+</tr>
+<tr>
+<td>4</td>
+<td>商密RSA双向认证</td>
+<td>55522</td>
+</tr>
+<tr>
+<td>5</td>
+<td>国密GM单向认证</td>
+<td>55531</td>
+</tr>
+<tr>
+<td>6</td>
+<td>国密GM双向认证</td>
+<td>55532</td>
+</tr>
+<tr>
+<td>7</td>
+<td>国密商密RSA&#x2F;GM自适应单向认证</td>
+<td>55544</td>
+</tr>
+</tbody></table>
+<p>拉起</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">podman run -<span class="built_in">id</span> --name gmssl -p 80:80 -p 443:443 -p 55511:55511 -p 55512:55512 -p 55521:55521 -p 55522:55522 -p 55531:55531 -p 55532:55532 -p 55544:55544 -p 55542:55542 docker.io/laushinelae/gmssl:v1.1</span><br></pre></td></tr></table></figure>
+
+
+
+<h1 id="构建方法"><a href="#构建方法" class="headerlink" title="构建方法"></a>构建方法</h1><p>新增2个文件<code>nginx.conf</code>、<code>Dockerfile</code></p>
+<p>新增1个文件夹<code>keystore</code></p>
+<p>打包如下</p>
+<p><a href="../File/gmssl.zip">gmssl.zip</a></p>
+<p>文件内容：</p>
+<p><code>Dockerfile</code></p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用官方 CentOS 7 镜像作为基础</span></span><br><span class="line"><span class="keyword">FROM</span> centos:<span class="number">7</span> AS gmssl-builder</span><br><span class="line"></span><br><span class="line"><span class="comment"># 更新系统并安装必要的依赖</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> yum -y update &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    yum -y install wget tar gcc make &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    yum -y install pcre-devel</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 下载国密 OpenSSL 套件</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> wget -P /root/ https://www.gmssl.cn/gmssl/down/gmssl_openssl_1.1_b2024_x64_1.tar.gz &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    tar xzf /root/gmssl_openssl_1.1_b2024_x64_1.tar.gz -C /usr/local</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 下载 Nginx 安装包</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> wget -P /root/ http://nginx.org/download/nginx-1.24.0.tar.gz &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    tar xzf /root/nginx-1.24.0.tar.gz -C /root/</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 编辑 Nginx 配置</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> sed -i <span class="string">&#x27;s|$OPENSSL/.openssl/|$OPENSSL/|g&#x27;</span> /root/nginx-1.24.0/auto/lib/openssl/conf</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 编译 Nginx</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> <span class="built_in">cd</span> /root/nginx-1.24.0 &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    ./configure \</span></span><br><span class="line"><span class="language-bash">    --without-http_gzip_module \</span></span><br><span class="line"><span class="language-bash">    --with-http_ssl_module \</span></span><br><span class="line"><span class="language-bash">    --with-http_stub_status_module \</span></span><br><span class="line"><span class="language-bash">    --with-http_v2_module \</span></span><br><span class="line"><span class="language-bash">    --with-stream \</span></span><br><span class="line"><span class="language-bash">    --with-file-aio \</span></span><br><span class="line"><span class="language-bash">    --with-openssl=<span class="string">&quot;/usr/local/gmssl&quot;</span> &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    make &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    make install</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">FROM</span> centos:<span class="number">7</span></span><br><span class="line"><span class="comment"># 作者信息</span></span><br><span class="line"><span class="keyword">LABEL</span><span class="language-bash"> maintainer=<span class="string">&quot;laushinelae@gmail.com&quot;</span></span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> --from=gmssl-builder /usr/local/nginx /usr/local/nginx</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> --from=gmssl-builder /usr/local/gmssl /usr/local/gmssl</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除原nginx.conf文件，并从gmssl_nginx中复制新的nginx.conf和key文件夹</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> <span class="built_in">rm</span> -f /usr/local/nginx/conf/nginx.conf &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    <span class="built_in">mkdir</span> -p /usr/local/nginx/conf/keystore</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> ./nginx.conf /usr/local/nginx/conf/</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> ./keystore /usr/local/nginx/conf/keystore</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> yum -y install pcre-devel &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    <span class="comment">#yum -y update &amp;&amp; \</span></span></span><br><span class="line"><span class="language-bash">    yum clean all &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">    <span class="built_in">rm</span> -rf /var/cache/yum</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 清理安装文件</span></span><br><span class="line"><span class="comment">#RUN rm -rf /root/*.tar.gz /root/nginx-1.24.0</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 暴露 Nginx 端口</span></span><br><span class="line"><span class="keyword">EXPOSE</span> <span class="number">80</span> <span class="number">443</span> <span class="number">55511</span> <span class="number">55512</span> <span class="number">55521</span> <span class="number">55522</span> <span class="number">55531</span> <span class="number">55532</span> <span class="number">55544</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动 Nginx</span></span><br><span class="line"><span class="keyword">CMD</span><span class="language-bash"> [<span class="string">&quot;/usr/local/nginx/sbin/nginx&quot;</span>, <span class="string">&quot;-g&quot;</span>, <span class="string">&quot;daemon off;&quot;</span>]</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p><code>nginx.conf</code></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">worker_processes</span> <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="section">events</span> &#123;</span><br><span class="line">    <span class="attribute">worker_connections</span> <span class="number">1024</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">http</span> &#123;</span><br><span class="line">    <span class="attribute">include</span> mime.types;</span><br><span class="line">    <span class="attribute">default_type</span> application/octet-stream;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">sendfile</span> <span class="literal">on</span>;</span><br><span class="line"></span><br><span class="line">    <span class="attribute">keepalive_timeout</span> <span class="number">65</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 不加密传输</span></span><br><span class="line">    <span class="section">server</span> &#123;</span><br><span class="line">        <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">        <span class="attribute">server_name</span> test.com;</span><br><span class="line"></span><br><span class="line">        <span class="section">location</span> / &#123;</span><br><span class="line">            <span class="attribute">default_type</span> text/html; <span class="comment"># 对于HTML内容的设置</span></span><br><span class="line">            <span class="attribute">return</span> <span class="number">200</span> <span class="string">&#x27;Your IP address is <span class="variable">$remote_addr</span> and the protocol is <span class="variable">$scheme</span>.&#x27;</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">error_page</span> <span class="number">500</span> <span class="number">502</span> <span class="number">503</span> <span class="number">504</span> /50x.html;</span><br><span class="line">        <span class="section">location</span> = /50x.html &#123;</span><br><span class="line">            <span class="attribute">root</span> html;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment"># 商密RSA单向认证测试端口</span></span><br><span class="line">    <span class="section">server</span> &#123;</span><br><span class="line">        <span class="attribute">listen</span> <span class="number">0.0.0.0:443</span> ssl;</span><br><span class="line">        <span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line">        <span class="attribute">ssl_ciphers</span> HIGH:!aNULL:!MD5;</span><br><span class="line">        <span class="attribute">ssl_verify_client</span> <span class="literal">off</span>;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_certificate</span> keystore/rsa.test.com.crt.pem;</span><br><span class="line">        <span class="attribute">ssl_certificate_key</span> keystore/rsa.test.com.key.pem;</span><br><span class="line"></span><br><span class="line">        <span class="section">location</span> / &#123;</span><br><span class="line">            <span class="attribute">default_type</span> text/html; <span class="comment"># 对于HTML内容的设置</span></span><br><span class="line">            <span class="attribute">return</span> <span class="number">200</span> <span class="string">&#x27;Your IP address is <span class="variable">$remote_addr</span> and the protocol is <span class="variable">$scheme</span>.&#x27;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="section">location</span> /test/ &#123;</span><br><span class="line">            <span class="attribute">default_type</span> text/plain; <span class="comment"># 显式设置内容类型为文本</span></span><br><span class="line">            <span class="attribute">return</span> <span class="number">200</span> <span class="string">&#x27;This is a test page. Your IP address is <span class="variable">$remote_addr</span> and the protocol is <span class="variable">$scheme</span>.&#x27;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 商密ECC单向认证</span></span><br><span class="line">    <span class="section">server</span> &#123;</span><br><span class="line">        <span class="attribute">listen</span> <span class="number">0.0.0.0:55511</span> ssl;</span><br><span class="line">        <span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line">        <span class="attribute">ssl_ciphers</span> HIGH:!aNULL:!MD5;</span><br><span class="line">        <span class="attribute">ssl_verify_client</span> <span class="literal">off</span>;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_certificate</span> keystore/ecc.test.com.crt.pem;</span><br><span class="line">        <span class="attribute">ssl_certificate_key</span> keystore/ecc.test.com.key.pem;</span><br><span class="line"></span><br><span class="line">        <span class="section">location</span> / &#123;</span><br><span class="line">            <span class="attribute">default_type</span> text/html; <span class="comment"># 对于HTML内容的设置</span></span><br><span class="line">            <span class="attribute">return</span> <span class="number">200</span> <span class="string">&#x27;Your IP address is <span class="variable">$remote_addr</span> and the protocol is <span class="variable">$scheme</span>.&#x27;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 商密ECC双向认证</span></span><br><span class="line">    <span class="section">server</span> &#123;</span><br><span class="line">        <span class="attribute">listen</span> <span class="number">0.0.0.0:55512</span> ssl;</span><br><span class="line">        <span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line">        <span class="attribute">ssl_ciphers</span> HIGH:!aNULL:!MD5;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_verify_client</span> <span class="literal">on</span>;</span><br><span class="line">        <span class="attribute">ssl_client_certificate</span> keystore/ecc.ca.pem;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_certificate</span> keystore/ecc.test.com.crt.pem;</span><br><span class="line">        <span class="attribute">ssl_certificate_key</span> keystore/ecc.test.com.key.pem;</span><br><span class="line"></span><br><span class="line">        <span class="section">location</span> / &#123;</span><br><span class="line">            <span class="attribute">default_type</span> text/html; <span class="comment"># 对于HTML内容的设置</span></span><br><span class="line">            <span class="attribute">return</span> <span class="number">200</span> <span class="string">&#x27;Your IP address is <span class="variable">$remote_addr</span> and the protocol is <span class="variable">$scheme</span>.&#x27;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 商密RSA单向认证</span></span><br><span class="line">    <span class="section">server</span> &#123;</span><br><span class="line">        <span class="attribute">listen</span> <span class="number">0.0.0.0:55521</span> ssl;</span><br><span class="line">        <span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line">        <span class="attribute">ssl_ciphers</span> HIGH:!aNULL:!MD5;</span><br><span class="line">        <span class="attribute">ssl_verify_client</span> <span class="literal">off</span>;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_certificate</span> keystore/rsa.test.com.crt.pem;</span><br><span class="line">        <span class="attribute">ssl_certificate_key</span> keystore/rsa.test.com.key.pem;</span><br><span class="line"></span><br><span class="line">        <span class="section">location</span> / &#123;</span><br><span class="line">            <span class="attribute">default_type</span> text/html; <span class="comment"># 对于HTML内容的设置</span></span><br><span class="line">            <span class="attribute">return</span> <span class="number">200</span> <span class="string">&#x27;Your IP address is <span class="variable">$remote_addr</span> and the protocol is <span class="variable">$scheme</span>.&#x27;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 商密RSA双向认证</span></span><br><span class="line">    <span class="section">server</span> &#123;</span><br><span class="line">        <span class="attribute">listen</span> <span class="number">0.0.0.0:55522</span> ssl;</span><br><span class="line">        <span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line">        <span class="attribute">ssl_ciphers</span> HIGH:!aNULL:!MD5;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_verify_client</span> <span class="literal">on</span>;</span><br><span class="line">        <span class="attribute">ssl_client_certificate</span> keystore/rsa.ca.pem;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_certificate</span> keystore/rsa.test.com.crt.pem;</span><br><span class="line">        <span class="attribute">ssl_certificate_key</span> keystore/rsa.test.com.key.pem;</span><br><span class="line"></span><br><span class="line">        <span class="section">location</span> / &#123;</span><br><span class="line">            <span class="attribute">default_type</span> text/html; <span class="comment"># 对于HTML内容的设置</span></span><br><span class="line">            <span class="attribute">return</span> <span class="number">200</span> <span class="string">&#x27;Your IP address is <span class="variable">$remote_addr</span> and the protocol is <span class="variable">$scheme</span>.&#x27;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 国密GM单向认证</span></span><br><span class="line">    <span class="section">server</span> &#123;</span><br><span class="line">        <span class="attribute">listen</span> <span class="number">0.0.0.0:55531</span> ssl;</span><br><span class="line">        <span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line">        <span class="attribute">ssl_ciphers</span> ECDHE-RSA-AES128-GCM-SHA256:AES128-SHA:DES-CBC3-SHA:ECC-SM4-CBC-SM3:ECC-SM4-GCM-SM3;</span><br><span class="line">        <span class="attribute">ssl_verify_client</span> <span class="literal">off</span>;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_certificate</span> keystore/sm2.test.com.sig.crt.pem;</span><br><span class="line">        <span class="attribute">ssl_certificate_key</span> keystore/sm2.test.com.sig.key.pem;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_certificate</span> keystore/sm2.test.com.enc.crt.pem;</span><br><span class="line">        <span class="attribute">ssl_certificate_key</span> keystore/sm2.test.com.enc.key.pem;</span><br><span class="line"></span><br><span class="line">        <span class="section">location</span> / &#123;</span><br><span class="line">            <span class="attribute">default_type</span> text/html; <span class="comment"># 对于HTML内容的设置</span></span><br><span class="line">            <span class="attribute">return</span> <span class="number">200</span> <span class="string">&#x27;Your IP address is <span class="variable">$remote_addr</span> and the protocol is <span class="variable">$scheme</span>.&#x27;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 国密GM双向认证</span></span><br><span class="line">    <span class="section">server</span> &#123;</span><br><span class="line">        <span class="attribute">listen</span> <span class="number">0.0.0.0:55532</span> ssl;</span><br><span class="line">        <span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line">        <span class="attribute">ssl_ciphers</span> ECDHE-RSA-AES128-GCM-SHA256:AES128-SHA:DES-CBC3-SHA:ECC-SM4-CBC-SM3:ECC-SM4-GCM-SM3:ECDHE-SM4-CBC-SM3:ECDHE-SM4-GCM-SM3;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_verify_client</span> <span class="literal">on</span>;</span><br><span class="line">        <span class="attribute">ssl_client_certificate</span> keystore/sm2.ca.pem;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_certificate</span> keystore/sm2.test.com.sig.crt.pem;</span><br><span class="line">        <span class="attribute">ssl_certificate_key</span> keystore/sm2.test.com.sig.key.pem;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_certificate</span> keystore/sm2.test.com.enc.crt.pem;</span><br><span class="line">        <span class="attribute">ssl_certificate_key</span> keystore/sm2.test.com.enc.key.pem;</span><br><span class="line"></span><br><span class="line">        <span class="section">location</span> / &#123;</span><br><span class="line">            <span class="attribute">default_type</span> text/html; <span class="comment"># 对于HTML内容的设置</span></span><br><span class="line">            <span class="attribute">return</span> <span class="number">200</span> <span class="string">&#x27;Your IP address is <span class="variable">$remote_addr</span> and the protocol is <span class="variable">$scheme</span>.&#x27;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 国密商密RSA/GM自适应单向认证</span></span><br><span class="line">    <span class="section">server</span> &#123;</span><br><span class="line">        <span class="attribute">listen</span> <span class="number">0.0.0.0:55544</span> ssl;</span><br><span class="line">        <span class="attribute">ssl_protocols</span> TLSv1 TLSv1.<span class="number">1</span> TLSv1.<span class="number">2</span>;</span><br><span class="line">        <span class="attribute">ssl_ciphers</span> ECDHE-RSA-AES128-GCM-SHA256:AES128-SHA:DES-CBC3-SHA:ECC-SM4-CBC-SM3:ECC-SM4-GCM-SM3;</span><br><span class="line">        <span class="attribute">ssl_verify_client</span> <span class="literal">off</span>;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_certificate</span> keystore/rsa.test.com.crt.pem;</span><br><span class="line">        <span class="attribute">ssl_certificate_key</span> keystore/rsa.test.com.key.pem;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_certificate</span> keystore/sm2.test.com.sig.crt.pem;</span><br><span class="line">        <span class="attribute">ssl_certificate_key</span> keystore/sm2.test.com.sig.key.pem;</span><br><span class="line"></span><br><span class="line">        <span class="attribute">ssl_certificate</span> keystore/sm2.test.com.enc.crt.pem;</span><br><span class="line">        <span class="attribute">ssl_certificate_key</span> keystore/sm2.test.com.enc.key.pem;</span><br><span class="line"></span><br><span class="line">        <span class="section">location</span> / &#123;</span><br><span class="line">            <span class="attribute">default_type</span> text/html; <span class="comment"># 对于HTML内容的设置</span></span><br><span class="line">            <span class="attribute">return</span> <span class="number">200</span> <span class="string">&#x27;Your IP address is <span class="variable">$remote_addr</span> and the protocol is <span class="variable">$scheme</span>.&#x27;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<p>下载测试证书</p>
+<p>地址：<a target="_blank" rel="noopener" href="https://www.gmcrt.cn/gmcrt/index.jsp">https://www.gmcrt.cn/gmcrt/index.jsp</a></p>
+<p>三个类型的证书分别都下载</p>
+<p><img src="/../Image/image-20240409113441799.png" alt="image-20240409113441799"></p>
+<p>解压</p>
+<p><img src="/../Image/image-20240409113536082.png" alt="image-20240409113536082"></p>
+<p>提取三个文件的如下内容，并且放到<code>keystore文</code>件夹中</p>
+<p><img src="/../Image/image-20240409113749260.png" alt="image-20240409113749260"></p>
+<p>构建容器</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">podman build -t gmssl .</span><br></pre></td></tr></table></figure>
+
+
+
+<p>拉起容器</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">podman run -<span class="built_in">id</span> --name gmssl -p 80:80 -p 443:443 -p 55511:55511 -p 55512:55512 -p 55521:55521 -p 55522:55522 -p 55531:55531 -p 55532:55532 -p 55544:55544 -p 55542:55542 docker.io/laushinelae/gmssl:v1.1</span><br></pre></td></tr></table></figure>
+
+
+
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://laushinelae.github.io">LiuXinLei</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://laushinelae.github.io/101%20Docker%E6%90%AD%E5%BB%BA%E5%9B%BD%E5%AF%86ssl/">https://laushinelae.github.io/101%20Docker%E6%90%AD%E5%BB%BA%E5%9B%BD%E5%AF%86ssl/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://laushinelae.github.io" target="_blank">lxl's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Linux/">Linux</a><a class="post-meta__tags" href="/tags/CentOS/">CentOS</a><a class="post-meta__tags" href="/tags/Docker-Podman/">Docker/Podman</a><a class="post-meta__tags" href="/tags/%E6%95%99%E7%A8%8B/">教程</a><a class="post-meta__tags" href="/tags/%E5%9B%BD%E5%AF%86/">国密</a><a class="post-meta__tags" href="/tags/RSA/">RSA</a><a class="post-meta__tags" href="/tags/gmssl/">gmssl</a><a class="post-meta__tags" href="/tags/%E5%9B%BD%E5%AF%86ssl/">国密ssl</a></div><div class="post_share"><div class="social-share" data-image="/img/avatar.gif" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/Pay_WeChat.jpg" target="_blank"><img class="post-qr-code-img" src="/img/Pay_WeChat.jpg" alt="wechat"/></a><div class="post-qr-code-desc">wechat</div></li><li class="reward-item"><a href="/img/Pay_AliPay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/Pay_AliPay.jpg" alt="alipay"/></a><div class="post-qr-code-desc">alipay</div></li></ul></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/010%20CentOS%E4%B8%AD%E5%AE%89%E8%A3%85Docker%E6%95%99%E7%A8%8B/" title="CentOS中安装Docker教程"><div class="cover" style="background: var(--default-bg-color)"></div><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">CentOS中安装Docker教程</div></div></a></div><div class="next-post pull-right"><a href="/020%20%E4%BD%BF%E7%94%A8%20Docker%E6%90%AD%E5%BB%BAConfluence%E6%8C%87%E5%8D%97/" title="使用Docker搭建Confluence指南"><div class="cover" style="background: var(--default-bg-color)"></div><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">使用Docker搭建Confluence指南</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/010%20CentOS%E4%B8%AD%E5%AE%89%E8%A3%85Docker%E6%95%99%E7%A8%8B/" title="CentOS中安装Docker教程"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-04-03</div><div class="title">CentOS中安装Docker教程</div></div></a></div><div><a href="/000%20%E4%BB%8E0%E5%88%B01%E6%90%AD%E5%BB%BAPOC%E6%B5%8B%E8%AF%95%E6%9C%BA/" title="从0到1搭建POC测试机"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-04-01</div><div class="title">从0到1搭建POC测试机</div></div></a></div><div><a href="/200%20HTTPS%20%E5%92%8C%20SSL&TLS%20%E5%8D%8F%E8%AE%AE/" title="HTTPS 和 SSL&amp;TLS 协议"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-04-10</div><div class="title">HTTPS 和 SSL&amp;TLS 协议</div></div></a></div><div><a href="/020%20%E4%BD%BF%E7%94%A8%20Docker%E6%90%AD%E5%BB%BAConfluence%E6%8C%87%E5%8D%97/" title="使用Docker搭建Confluence指南"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-04-01</div><div class="title">使用Docker搭建Confluence指南</div></div></a></div></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="/img/avatar.gif" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">LiuXinLei</div><div class="author-info__description">LiuXinLei's Blog</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">16</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/laushinelae"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">This is lxl's Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8A%A0%E5%AF%86%E7%AE%97%E6%B3%95%E5%92%8C%E8%AE%A4%E8%AF%81%E6%96%B9%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">加密算法和认证方式</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9E%84%E5%BB%BA%E6%96%B9%E6%B3%95"><span class="toc-number">2.</span> <span class="toc-text">构建方法</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/200%20HTTPS%20%E5%92%8C%20SSL&amp;TLS%20%E5%8D%8F%E8%AE%AE/" title="HTTPS 和 SSL&amp;TLS 协议">HTTPS 和 SSL&amp;TLS 协议</a><time datetime="2024-04-10T11:13:12.000Z" title="发表于 2024-04-10 19:13:12">2024-04-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/010%20CentOS%E4%B8%AD%E5%AE%89%E8%A3%85Docker%E6%95%99%E7%A8%8B/" title="CentOS中安装Docker教程">CentOS中安装Docker教程</a><time datetime="2024-04-03T11:33:52.000Z" title="发表于 2024-04-03 19:33:52">2024-04-03</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/101%20Docker%E6%90%AD%E5%BB%BA%E5%9B%BD%E5%AF%86ssl/" title="Docker搭建国密ssl">Docker搭建国密ssl</a><time datetime="2024-04-03T11:33:52.000Z" title="发表于 2024-04-03 19:33:52">2024-04-03</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/020%20%E4%BD%BF%E7%94%A8%20Docker%E6%90%AD%E5%BB%BAConfluence%E6%8C%87%E5%8D%97/" title="使用Docker搭建Confluence指南">使用Docker搭建Confluence指南</a><time datetime="2024-04-01T05:33:52.000Z" title="发表于 2024-04-01 13:33:52">2024-04-01</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/000%20%E4%BB%8E0%E5%88%B01%E6%90%AD%E5%BB%BAPOC%E6%B5%8B%E8%AF%95%E6%9C%BA/" title="从0到1搭建POC测试机">从0到1搭建POC测试机</a><time datetime="2024-04-01T05:33:52.000Z" title="发表于 2024-04-01 13:33:52">2024-04-01</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 By LiuXinLei</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=4.13.0"></script><script src="/js/main.js?v=4.13.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.33/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const initGitalk = () => {
+    const gitalk = new Gitalk(Object.assign({
+      clientID: '4b7fe00324a98ae05e67',
+      clientSecret: '10e226abe2116b9f90957c2e39a5100b763dae07',
+      repo: 'laushinelae.github.io',
+      owner: 'laushinelae',
+      admin: ['laushinelae'],
+      id: '217b8aa342b9f52397061d609342f95f',
+      updateCountCallback: commentCount
+    },null))
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async() => {
+    if (typeof Gitalk === 'function') initGitalk()
+    else {
+      await getCSS('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.css')
+      await getScript('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.js')
+      initGitalk()
+    }
+  }
+  
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script async src="/js/fps.js"></script><link rel="stylesheet" href="/css/fps.css"><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=4.13.0"></script></div></div><!-- hexo injector body_end start --><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><p id="ghbdages"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" data-title="博客框架为Hexo_v7.1.0" title=""><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" data-title="主题版本Butterfly_v4.13.0" title=""><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="https://github.com/" style="margin-inline:5px" data-title="本站项目由Github托管" title=""><img src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&amp;logo=GitHub" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" data-title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可" title=""><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></p>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/js/runtime.js"></script><!-- hexo injector body_end end --></body></html>
